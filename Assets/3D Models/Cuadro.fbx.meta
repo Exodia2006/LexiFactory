@@ -1,9 +1,19 @@
 fileFormatVersion: 2
-guid: 4bc548c2f6ed1894ebc0193719848127
+guid: b9d8cb3fb052d4a49ae0fb66f0abaa87
 ModelImporter:
   serializedVersion: 22200
   internalIDToNameTable: []
-  externalObjects: {}
+  externalObjects:
+  - first:
+      type: UnityEngine:Texture2D
+      assembly: UnityEngine.CoreModule
+      name: Image_Cuadro
+    second: {fileID: 2800000, guid: 47b7f1eda527b794fa48bdb17a9cc39d, type: 3}
+  - first:
+      type: UnityEngine:Texture2D
+      assembly: UnityEngine.CoreModule
+      name: Textura madera clara
+    second: {fileID: 2800000, guid: d697587e5b1b2ab4e80462700f9e2148, type: 3}
   materials:
     materialImportMode: 2
     materialName: 0
@@ -33,7 +43,7 @@ ModelImporter:
     isReadable: 0
   meshes:
     lODScreenPercentages: []
-    globalScale: 0.4
+    globalScale: 2.5
     meshCompression: 0
     addColliders: 0
     useSRGBMaterialColor: 1
@@ -88,7 +98,7 @@ ModelImporter:
     armStretch: 0.05
     legStretch: 0.05
     feetSpacing: 0
-    globalScale: 0.004
+    globalScale: 0.024999999
     rootMotionBoneName: 
     hasTranslationDoF: 0
     hasExtraRoot: 0

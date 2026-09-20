@@ -1,9 +1,14 @@
 fileFormatVersion: 2
-guid: ae25dca6a98be6848bfc66b237f50bb5
+guid: 15747f542c824474bb8f280464db9644
 ModelImporter:
   serializedVersion: 22200
   internalIDToNameTable: []
-  externalObjects: {}
+  externalObjects:
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: Facade_Glass
+    second: {fileID: 2100000, guid: 10ef262d48a5d99469f9ac88e464e3c4, type: 2}
   materials:
     materialImportMode: 2
     materialName: 0
@@ -33,7 +38,7 @@ ModelImporter:
     isReadable: 0
   meshes:
     lODScreenPercentages: []
-    globalScale: 4
+    globalScale: 2.6
     meshCompression: 0
     addColliders: 0
     useSRGBMaterialColor: 1
@@ -88,7 +93,7 @@ ModelImporter:
     armStretch: 0.05
     legStretch: 0.05
     feetSpacing: 0
-    globalScale: 0.04
+    globalScale: 2.6
     rootMotionBoneName: 
     hasTranslationDoF: 0
     hasExtraRoot: 0
