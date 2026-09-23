@@ -26,7 +26,7 @@ RenderSettings:
   m_AmbientIntensity: 1
   m_AmbientMode: 0
   m_SubtractiveShadowColor: {r: 0.42, g: 0.478, b: 0.627, a: 1}
-  m_SkyboxMaterial: {fileID: 10304, guid: 0000000000000000f000000000000000, type: 0}
+  m_SkyboxMaterial: {fileID: 2100000, guid: 5c8d5031ce45e4962818ca2b5426a8cf, type: 2}
   m_HaloStrength: 0.5
   m_FlareStrength: 1
   m_FlareFadeSpeed: 3
@@ -149,6 +149,37 @@ Transform:
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &29817148
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 29817149}
+  m_Layer: 7
+  m_Name: Gizmo
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &29817149
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 29817148}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: -0.164, y: -1.39, z: 3.045}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 760861046}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &32842015
 GameObject:
@@ -409,7 +440,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9c25d6fdf7fbee742b3c55e963a084d7, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  objectName: Cuaderno de apuntes
+  objectName: Press E
 --- !u!1001 &325625020
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -1342,13 +1373,14 @@ GameObject:
   m_Component:
   - component: {fileID: 760861046}
   - component: {fileID: 760861045}
+  - component: {fileID: 760861047}
   m_Layer: 7
   m_Name: Hands
   m_TagString: Untagged
   m_Icon: {fileID: 2488908585195742037, guid: 0000000000000000d000000000000000, type: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!114 &760861045
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1361,7 +1393,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: e2fabf5d5bdca2d49b2d38eb86d16d07, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  detectionPoint: {fileID: 0}
+  detectionPoint: {fileID: 29817149}
   detectionRadius: 1
   interactableLayer:
     serializedVersion: 2
@@ -1375,14 +1407,28 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 760861044}
   serializedVersion: 2
-  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalRotation: {x: -0.23633607, y: 0.66315293, z: -0.23369727, w: 0.67064077}
+  m_LocalPosition: {x: -2.7999997, y: 0.7738594, z: -0.15400004}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 440685329}
-  m_Father: {fileID: 1716383086}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+  - {fileID: 29817149}
+  m_Father: {fileID: 2080584596}
+  m_LocalEulerAnglesHint: {x: -0.403, y: 89.499, z: -38.823}
+--- !u!114 &760861047
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 760861044}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 61a06282556d3f046ac105e4d3975141, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  pushZFactor: 0.5
 --- !u!4 &776370382 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: -8679921383154817045, guid: a2893cabe28bbdf45b5ff86304efcd94, type: 3}
@@ -2220,8 +2266,8 @@ RectTransform:
   m_GameObject: {fileID: 1115660939}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 0.027752, y: 0.027752, z: 0.027752}
-  m_ConstrainProportionsScale: 0
+  m_LocalScale: {x: 0.001, y: 0.001, z: 0.001}
+  m_ConstrainProportionsScale: 1
   m_Children:
   - {fileID: 335533620}
   m_Father: {fileID: 0}
@@ -2829,6 +2875,10 @@ MonoBehaviour:
   rightHand: {fileID: 0}
   containerOffset: {x: 0, y: -0.15, z: 0.25}
   handSeparation: 3
+  dropYOnLookDown: 0.08
+  pushZOnLookDown: 0.1
+  pitchCompensation: 15
+  smoothSpeed: 10
 --- !u!4 &1437093850
 Transform:
   m_ObjectHideFlags: 0
@@ -3631,7 +3681,6 @@ Transform:
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
-  - {fileID: 760861046}
   - {fileID: 2080584596}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
@@ -4486,6 +4535,7 @@ Transform:
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
+  - {fileID: 760861046}
   - {fileID: 1437093850}
   m_Father: {fileID: 1716383086}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
