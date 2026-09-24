@@ -1,9 +1,14 @@
 using UnityEngine;
+using TMPro;
 
 public class RubikPuzzleInteractable : MonoBehaviour, IInteractable
 {
     [Header("UI Text Override")]
-    [SerializeField] private string hoverMessage = "Resolver acertijo de colores";
+    [SerializeField] private string hoverMessage = "Presiona E para interactuar";
+
+    [Header("World Space Canvas del Mensaje")]
+    [SerializeField] private GameObject promptCanvas; // Duplicado del Canvas con el texto flotante
+    [SerializeField] private TextMeshProUGUI promptText; // Texto dentro del Canvas (opcional si quieres cambiar el mensaje)
 
     [Header("Cámaras")]
     [SerializeField] private Camera mainPlayerCamera;
@@ -17,14 +22,25 @@ public class RubikPuzzleInteractable : MonoBehaviour, IInteractable
     [SerializeField] private RubikPuzzleController puzzleController;
 
     private bool isInPuzzleView = false;
+    private bool isPlayerLooking = false;
 
     private void Start()
     {
         if (rubikCamera != null) rubikCamera.gameObject.SetActive(false);
+        if (promptCanvas != null) promptCanvas.SetActive(false); // Iniciar oculto
+
+        if (promptText != null) promptText.text = hoverMessage;
     }
 
     private void Update()
     {
+        // 1. Si el jugador está mirando el objeto (y no está metido en el puzzle), orientar el Canvas a la cámara
+        if (isPlayerLooking && !isInPuzzleView && promptCanvas != null && mainPlayerCamera != null)
+        {
+            // Apuntar el Canvas hacia la cámara principal para que siempre sea legible
+            promptCanvas.transform.rotation = Quaternion.LookRotation(promptCanvas.transform.position - mainPlayerCamera.transform.position);
+        }
+
         if (!isInPuzzleView) return;
 
         // Salir con Escape
@@ -62,8 +78,23 @@ public class RubikPuzzleInteractable : MonoBehaviour, IInteractable
 
     // --- INTERFAZ IINTERACTABLE ---
     public string GetHoverText() => hoverMessage;
-    public void OnHandEnter() { }
-    public void OnHandExit() { }
+
+    public void OnHandEnter()
+    {
+        // Se activa cuando la mano / raycast del jugador mira al objeto
+        if (!isInPuzzleView)
+        {
+            isPlayerLooking = true;
+            if (promptCanvas != null) promptCanvas.SetActive(true);
+        }
+    }
+
+    public void OnHandExit()
+    {
+        // Se desactiva cuando el jugador se aleja o deja de mirar el objeto
+        isPlayerLooking = false;
+        if (promptCanvas != null) promptCanvas.SetActive(false);
+    }
 
     public void Interact()
     {
@@ -73,6 +104,9 @@ public class RubikPuzzleInteractable : MonoBehaviour, IInteractable
     private void EnterPuzzle()
     {
         isInPuzzleView = true;
+
+        // Ocultar el mensaje flotante al entrar a la vista del puzzle
+        if (promptCanvas != null) promptCanvas.SetActive(false);
 
         if (mainPlayerCamera != null) mainPlayerCamera.gameObject.SetActive(false);
         if (rubikCamera != null) rubikCamera.gameObject.SetActive(true);
@@ -98,6 +132,12 @@ public class RubikPuzzleInteractable : MonoBehaviour, IInteractable
 
         Cursor.lockState = CursorLockMode.Locked;
         Cursor.visible = false;
+
+        // Si al salir del puzzle la mano sigue apuntando al objeto, reactivar el mensaje
+        if (isPlayerLooking && promptCanvas != null)
+        {
+            promptCanvas.SetActive(true);
+        }
     }
 
     private void SetPlayerControls(bool state)
