@@ -1,5 +1,6 @@
 using System;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 using TMPro;
 
 public enum GameState
@@ -17,13 +18,16 @@ public class GameManager : MonoBehaviour
 
     [Header("Settings")]
     [SerializeField] private GameState initialMode = GameState.Gameplay;
+    [SerializeField] private string mainMenuSceneName = "MainMenu";
+    [SerializeField] private string gameSceneName = "Game";
+
     public GameState CurrentState { get; private set; }
     public static event Action<GameState> OnStateChanged;
     public static event Action<bool> OnPauseToggled;
 
     [Header("Door Code Puzzle System")]
     [SerializeField] private TextMeshProUGUI codeDisplayText;
-    [SerializeField] private string secretCode = "7392"; // Tu código secreto de 4 dígitos
+    [SerializeField] private string secretCode = "7392";
     private char[] currentDiscoveredCode = new char[] { '?', '?', '?', '?' };
 
     private void Awake()
@@ -34,6 +38,17 @@ public class GameManager : MonoBehaviour
     private void Start()
     {
         UpdateCodeUI();
+    }
+
+    private void OnEnable()
+    {
+        // Suscribirse al evento de cambio de escena para restaurar referencias de UI si es necesario
+        SceneManager.sceneLoaded += OnSceneLoaded;
+    }
+
+    private void OnDisable()
+    {
+        SceneManager.sceneLoaded -= OnSceneLoaded;
     }
 
     private void InitializeSingleton()
@@ -48,6 +63,23 @@ public class GameManager : MonoBehaviour
         DontDestroyOnLoad(gameObject);
     }
 
+    private void OnSceneLoaded(Scene scene, LoadSceneMode mode)
+    {
+        // Al cargar la escena de juego, buscar el texto de la UI si la referencia se perdió
+        if (scene.name == gameSceneName)
+        {
+            if (codeDisplayText == null)
+            {
+                GameObject textObj = GameObject.FindWithTag("CodeUI"); // Opcional: asigna la etiqueta "CodeUI" al texto en la escena
+                if (textObj != null)
+                {
+                    codeDisplayText = textObj.GetComponent<TextMeshProUGUI>();
+                }
+            }
+            UpdateCodeUI();
+        }
+    }
+
     // --- LÓGICA DE REVELACIÓN DE CÓDIGO ---
     public void RevealDigit(int index)
     {
@@ -57,6 +89,12 @@ public class GameManager : MonoBehaviour
             UpdateCodeUI();
             CheckVictoryCondition();
         }
+    }
+
+    public void ResetPuzzleCode()
+    {
+        currentDiscoveredCode = new char[] { '?', '?', '?', '?' };
+        UpdateCodeUI();
     }
 
     private void UpdateCodeUI()
@@ -85,7 +123,22 @@ public class GameManager : MonoBehaviour
 
     public void GameStart()
     {
-        UnityEngine.SceneManagement.SceneManager.LoadScene("Game");
+        SetTimeScale(1f);
+        ResetPuzzleCode(); // Limpiar el progreso previo
+        ChangeState(GameState.Gameplay);
+        SceneManager.LoadScene(gameSceneName);
+    }
+
+    public void GoToMainMenu()
+    {
+        SetTimeScale(1f);
+        ChangeState(GameState.MainMenu);
+
+        // Asegurar visibilidad del cursor en el menú principal
+        Cursor.lockState = CursorLockMode.None;
+        Cursor.visible = true;
+
+        SceneManager.LoadScene(mainMenuSceneName);
     }
 
     public void SetTimeScale(float scale)
@@ -97,9 +150,8 @@ public class GameManager : MonoBehaviour
     public void RestartLevel()
     {
         SetTimeScale(1f);
-        UnityEngine.SceneManagement.SceneManager.LoadScene(
-            UnityEngine.SceneManagement.SceneManager.GetActiveScene().buildIndex
-        );
+        ResetPuzzleCode();
+        SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
     }
 
     public void QuitGame()
@@ -107,6 +159,4 @@ public class GameManager : MonoBehaviour
         Application.Quit();
         Debug.Log("Quit Game");
     }
-
-
 }

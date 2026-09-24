@@ -1,23 +1,19 @@
 using UnityEngine;
-using UnityEngine.SceneManagement;
 
 public class Level1Controller : MonoBehaviour
 {
-    [Header("Scene Settings")]
-    [SerializeField] private string mainMenuSceneName = "MainMenu"; 
-
-   
     public void GoToMainMenu()
     {
         if (GameManager.Instance != null)
         {
-            GameManager.Instance.SetTimeScale(1f);
+            GameManager.Instance.GoToMainMenu();
         }
         else
         {
             Time.timeScale = 1f;
+            Cursor.lockState = CursorLockMode.None;
+            Cursor.visible = true;
+            UnityEngine.SceneManagement.SceneManager.LoadScene("MainMenu");
         }
-
-        SceneManager.LoadScene(mainMenuSceneName);
     }
 }
