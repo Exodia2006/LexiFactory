@@ -5,6 +5,51 @@ ModelImporter:
   internalIDToNameTable: []
   externalObjects:
   - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: Bonton azul
+    second: {fileID: 2100000, guid: 1999065bc5a032b45b50118fa260207a, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: Borton cafe
+    second: {fileID: 2100000, guid: d79e04a418b5bf74db9b48fc7405104c, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: Boton Blanco
+    second: {fileID: 2100000, guid: c909a0c2b6595f149bcf6b5df940a664, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: Boton amarillo
+    second: {fileID: 2100000, guid: 9226d0516f9a3264d9c3357f912cb726, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: Boton morado
+    second: {fileID: 2100000, guid: 104ccd0053d7393488bd6349f2834498, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: Boton naranja
+    second: {fileID: 2100000, guid: a508b2f73a088c343bf4e3f786bde4b3, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: Boton rojo
+    second: {fileID: 2100000, guid: 832bf440fc6befe49bf5153edf894636, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: Boton rosado
+    second: {fileID: 2100000, guid: 36f8121190212b54d9339926c673ad20, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: Boton verde
+    second: {fileID: 2100000, guid: 68ab7771e1606314eace307f28d01108, type: 2}
+  - first:
       type: UnityEngine:Texture2D
       assembly: UnityEngine.CoreModule
       name: Textura maquina
