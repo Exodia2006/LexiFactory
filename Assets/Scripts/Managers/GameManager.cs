@@ -1,5 +1,6 @@
 using System;
 using UnityEngine;
+using TMPro;
 
 public enum GameState
 {
@@ -20,9 +21,19 @@ public class GameManager : MonoBehaviour
     public static event Action<GameState> OnStateChanged;
     public static event Action<bool> OnPauseToggled;
 
+    [Header("Door Code Puzzle System")]
+    [SerializeField] private TextMeshProUGUI codeDisplayText;
+    [SerializeField] private string secretCode = "7392"; // Tu código secreto de 4 dígitos
+    private char[] currentDiscoveredCode = new char[] { '?', '?', '?', '?' };
+
     private void Awake()
     {
         InitializeSingleton();
+    }
+
+    private void Start()
+    {
+        UpdateCodeUI();
     }
 
     private void InitializeSingleton()
@@ -37,11 +48,45 @@ public class GameManager : MonoBehaviour
         DontDestroyOnLoad(gameObject);
     }
 
+    // --- LÓGICA DE REVELACIÓN DE CÓDIGO ---
+    public void RevealDigit(int index)
+    {
+        if (index >= 0 && index < 4)
+        {
+            currentDiscoveredCode[index] = secretCode[index];
+            UpdateCodeUI();
+            CheckVictoryCondition();
+        }
+    }
+
+    private void UpdateCodeUI()
+    {
+        if (codeDisplayText != null)
+        {
+            codeDisplayText.text = $"{currentDiscoveredCode[0]} {currentDiscoveredCode[1]} {currentDiscoveredCode[2]} {currentDiscoveredCode[3]}";
+        }
+    }
+
+    private void CheckVictoryCondition()
+    {
+        string current = new string(currentDiscoveredCode);
+        if (current == secretCode)
+        {
+            Debug.Log("¡Todos los acertijos resueltos! Puerta desbloqueada.");
+            ChangeState(GameState.Victory);
+        }
+    }
+
+    public void ChangeState(GameState newState)
+    {
+        CurrentState = newState;
+        OnStateChanged?.Invoke(newState);
+    }
+
     public void GameStart()
     {
         UnityEngine.SceneManagement.SceneManager.LoadScene("Game");
     }
-
 
     public void SetTimeScale(float scale)
     {

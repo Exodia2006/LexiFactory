@@ -17,7 +17,6 @@ public class CamHandFollower : MonoBehaviour
         else
             cameraTransform = Camera.main != null ? Camera.main.transform : null;
 
-        Debug.Log($"[HANDS TEST] Posición Inicial Guardada: {initialLocalPos} | Padre: {(cameraTransform != null ? cameraTransform.name : "SIN PADRE")}");
     }
 
     private void LateUpdate()

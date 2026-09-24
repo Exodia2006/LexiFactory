@@ -23,25 +23,35 @@ public class HandInteraction : MonoBehaviour
         Transform point = detectionPoint != null ? detectionPoint : transform;
         Collider[] hits = Physics.OverlapSphere(point.position, detectionRadius, interactableLayer);
 
-        if (hits.Length > 0)
-        {
-            if (hits[0].TryGetComponent<IInteractable>(out var interactable))
-            {
-                if (currentInteractable != interactable)
-                {
-                    currentInteractable?.OnHandExit();
-                    currentInteractable = interactable;
-                    currentInteractable.OnHandEnter();
+        IInteractable foundInteractable = null;
+        Collider targetCollider = null;
 
-                    // Mostrar el texto justo en la posición 3D del objeto detectado
-                    Vector3 targetPos = hits[0].transform.position;
-                    FloatingTextManager.Instance?.ShowText(currentInteractable.GetHoverText(), targetPos);
-                }
-                return;
+        // Buscamos en TODOS los colliders detectados por la esfera, no solo en el primero
+        foreach (var hit in hits)
+        {
+            if (hit.TryGetComponent<IInteractable>(out var interactable))
+            {
+                foundInteractable = interactable;
+                targetCollider = hit;
+                break; // Encontramos el interactuable válido
             }
         }
 
-        // Si alejamos la mano de los objetos, ocultamos el texto
+        if (foundInteractable != null)
+        {
+            if (currentInteractable != foundInteractable)
+            {
+                currentInteractable?.OnHandExit();
+                currentInteractable = foundInteractable;
+                currentInteractable.OnHandEnter();
+
+                Vector3 targetPos = targetCollider.ClosestPoint(point.position) + Vector3.up * 0.3f;
+                FloatingTextManager.Instance?.ShowText(currentInteractable.GetHoverText(), targetPos);
+            }
+            return;
+        }
+
+        // Si alejamos la mano o dejamos de detectar interactuables, ocultamos el texto
         if (currentInteractable != null)
         {
             currentInteractable.OnHandExit();
@@ -52,7 +62,7 @@ public class HandInteraction : MonoBehaviour
 
     private void HandleInput()
     {
-        if (currentInteractable != null && (Input.GetKeyDown(interactKey) || Input.GetMouseButtonDown(0)))
+        if (currentInteractable != null && (Input.GetKeyDown(interactKey)))
         {
             currentInteractable.Interact();
         }

@@ -9,7 +9,10 @@ public class ClassroomObject : MonoBehaviour, IInteractable
         return objectName; // Este es el texto que flotará al lado del objeto
     }
 
-    public void OnHandEnter() { }
+    public void OnHandEnter() {
+
+        Debug.Log($"Te acercaste a: {objectName}"); 
+    }
     public void OnHandExit() { }
 
     public void Interact()

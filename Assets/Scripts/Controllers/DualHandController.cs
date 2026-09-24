@@ -24,7 +24,6 @@ public class DualHandController : MonoBehaviour
 
     private void Start()
     {
-        Debug.Log(gameObject.name);
         mainCam = Camera.main;
     }
 
