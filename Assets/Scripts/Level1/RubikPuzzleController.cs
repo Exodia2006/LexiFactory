@@ -23,14 +23,12 @@ public class RubikPuzzleController : MonoBehaviour
     {
         IsActive = true;
         currentInputSequence.Clear(); // Limpiar intentos previos
-        Debug.Log("[RubikPuzzleController] Acertijo ACTIVADO");
     }
 
     public void DeactivatePuzzle()
     {
         IsActive = false;
         currentInputSequence.Clear();
-        Debug.Log("[RubikPuzzleController] Acertijo DESACTIVADO");
     }
 
     public void OnBlockClicked(string colorName)
@@ -45,7 +43,6 @@ public class RubikPuzzleController : MonoBehaviour
 
         // 2. Registrar el color ingresado
         currentInputSequence.Add(colorName);
-        Debug.Log($"[RubikPuzzleController] Color ingresado: {colorName}. Pasos: {currentInputSequence.Count}/{correctSequence.Count}");
 
         // 3. Validar si ya se completó la cantidad de colores requerida
         if (currentInputSequence.Count == correctSequence.Count)
@@ -69,7 +66,6 @@ public class RubikPuzzleController : MonoBehaviour
 
         if (isCorrect)
         {
-            Debug.Log("¡ACERTIJO RESUELTO CORRECTAMENTE!");
 
             // Flash VERDE en pantalla
             if (ScreenFlash.Instance != null)
@@ -89,7 +85,6 @@ public class RubikPuzzleController : MonoBehaviour
         }
         else
         {
-            Debug.LogWarning("Secuencia incorrecta. Reiniciando secuencia...");
             audioSource.PlayOneShot(failureSound);
             // Flash ROJO en pantalla al equivocarse
             if (ScreenFlash.Instance != null)
