@@ -71,31 +71,29 @@ public class RubikPuzzleController : MonoBehaviour
         {
             Debug.Log("¡ACERTIJO RESUELTO CORRECTAMENTE!");
 
+            // Flash VERDE en pantalla
+            if (ScreenFlash.Instance != null)
+                ScreenFlash.Instance.FlashSuccess();
+
             if (audioSource != null && successSound != null)
-            {
                 audioSource.PlayOneShot(successSound);
-            }
 
-            // 1. Notificar al GameManager usando TU método exacto
             if (GameManager.Instance != null)
-            {
                 GameManager.Instance.RevealDigit(codeDigitIndex);
-            }
 
-            // 2. Salir automáticamente de la vista de puzzle y devolver el control al jugador
             RubikPuzzleInteractable puzzleInteractable = GetComponentInParent<RubikPuzzleInteractable>();
             if (puzzleInteractable != null)
-            {
                 puzzleInteractable.ExitPuzzle();
-            }
             else
-            {
                 DeactivatePuzzle();
-            }
         }
         else
         {
             Debug.LogWarning("Secuencia incorrecta. Reiniciando secuencia...");
+            audioSource.PlayOneShot(failureSound);
+            // Flash ROJO en pantalla al equivocarse
+            if (ScreenFlash.Instance != null)
+                ScreenFlash.Instance.FlashError();
             currentInputSequence.Clear();
         }
     }
