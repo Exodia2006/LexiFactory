@@ -3820,7 +3820,19 @@ MonoBehaviour:
   m_TargetGraphic: {fileID: 716112154}
   m_OnClick:
     m_PersistentCalls:
-      m_Calls: []
+      m_Calls:
+      - m_Target: {fileID: 1542949794}
+        m_TargetAssemblyTypeName: GenericPuzzleInteractable, Assembly-CSharp
+        m_MethodName: OnStartButtonPressed
+        m_Mode: 1
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 0
+        m_CallState: 2
 --- !u!114 &716112154
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -4629,6 +4641,53 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   pushZFactor: 0.5
+--- !u!1 &772914576 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 919132149155446097, guid: 55c281187ae4e9a48aa44ba9def07a26, type: 3}
+  m_PrefabInstance: {fileID: 2017548074}
+  m_PrefabAsset: {fileID: 0}
+--- !u!65 &772914579
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 772914576}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 0
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Size: {x: 0.024999997, y: 0.06864554, z: 0.025000002}
+  m_Center: {x: 0, y: 0.021822738, z: -0.0000000037252903}
+--- !u!114 &772914580
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 772914576}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7088a26f29ffd3e4184a4ada5b299c60, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  hoverMessage: Presiona E para ver instrucciones
+  promptCanvas: {fileID: 0}
+  promptText: {fileID: 0}
+  instructionCanvas: {fileID: 639708392}
+  codeDigitIndex: 2
+  mainPlayerCamera: {fileID: 0}
+  puzzleCamera: {fileID: 0}
+  playerMovementScript: {fileID: 1716383084}
+  mouseLookScript: {fileID: 1716383084}
 --- !u!1 &776265690
 GameObject:
   m_ObjectHideFlags: 0
@@ -6987,7 +7046,19 @@ MonoBehaviour:
   m_TargetGraphic: {fileID: 1066451595}
   m_OnClick:
     m_PersistentCalls:
-      m_Calls: []
+      m_Calls:
+      - m_Target: {fileID: 772914580}
+        m_TargetAssemblyTypeName: GenericPuzzleInteractable, Assembly-CSharp
+        m_MethodName: CloseInstructions
+        m_Mode: 1
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 0
+        m_CallState: 2
 --- !u!114 &1066451595
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -7569,7 +7640,8 @@ GameObject:
   - component: {fileID: 1186271235}
   - component: {fileID: 1186271234}
   - component: {fileID: 1186271233}
-  m_Layer: 0
+  - component: {fileID: 1186271239}
+  m_Layer: 3
   m_Name: 'Caja '
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -7697,6 +7769,27 @@ Transform:
   - {fileID: 648728118}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1186271239
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1186271232}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7088a26f29ffd3e4184a4ada5b299c60, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  hoverMessage: Presiona E para ver instrucciones
+  promptCanvas: {fileID: 0}
+  promptText: {fileID: 0}
+  instructionCanvas: {fileID: 542944782}
+  codeDigitIndex: 2
+  mainPlayerCamera: {fileID: 0}
+  puzzleCamera: {fileID: 0}
+  playerMovementScript: {fileID: 1716383084}
+  mouseLookScript: {fileID: 2080584600}
 --- !u!4 &1210791898 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: -8679921383154817045, guid: 8f76ac65f538a74499e2addd4ce0395c, type: 3}
@@ -10254,6 +10347,53 @@ Transform:
   m_CorrespondingSourceObject: {fileID: -8679921383154817045, guid: 4030d9c88b3fa0b428aede28a55cee9a, type: 3}
   m_PrefabInstance: {fileID: 2031552734}
   m_PrefabAsset: {fileID: 0}
+--- !u!1 &1542949791 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 919132149155446097, guid: 90dc8f326bc17ca4a93845849178d46d, type: 3}
+  m_PrefabInstance: {fileID: 1708532660}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &1542949794
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1542949791}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7088a26f29ffd3e4184a4ada5b299c60, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  hoverMessage: Presiona E para ver instrucciones
+  promptCanvas: {fileID: 0}
+  promptText: {fileID: 0}
+  instructionCanvas: {fileID: 1390492222}
+  codeDigitIndex: 2
+  mainPlayerCamera: {fileID: 0}
+  puzzleCamera: {fileID: 0}
+  playerMovementScript: {fileID: 1716383084}
+  mouseLookScript: {fileID: 2080584600}
+--- !u!65 &1542949795
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1542949791}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 0
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Size: {x: 0.024999999, y: 0.024999997, z: 0.045808803}
+  m_Center: {x: 0, y: -0.031418435, z: -0.010404414}
 --- !u!1 &1545521836
 GameObject:
   m_ObjectHideFlags: 0
@@ -11207,10 +11347,20 @@ PrefabInstance:
       propertyPath: m_Name
       value: Silla
       objectReference: {fileID: 0}
+    - target: {fileID: 919132149155446097, guid: 90dc8f326bc17ca4a93845849178d46d, type: 3}
+      propertyPath: m_Layer
+      value: 3
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
-    m_AddedComponents: []
+    m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: 90dc8f326bc17ca4a93845849178d46d, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 1542949794}
+    - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: 90dc8f326bc17ca4a93845849178d46d, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 1542949795}
   m_SourcePrefab: {fileID: 100100000, guid: 90dc8f326bc17ca4a93845849178d46d, type: 3}
 --- !u!1 &1716383083
 GameObject:
@@ -11366,7 +11516,19 @@ MonoBehaviour:
   m_TargetGraphic: {fileID: 1718504000}
   m_OnClick:
     m_PersistentCalls:
-      m_Calls: []
+      m_Calls:
+      - m_Target: {fileID: 1542949794}
+        m_TargetAssemblyTypeName: GenericPuzzleInteractable, Assembly-CSharp
+        m_MethodName: CloseInstructions
+        m_Mode: 1
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 0
+        m_CallState: 2
 --- !u!114 &1718504000
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -12724,7 +12886,19 @@ MonoBehaviour:
   m_TargetGraphic: {fileID: 1926490275}
   m_OnClick:
     m_PersistentCalls:
-      m_Calls: []
+      m_Calls:
+      - m_Target: {fileID: 1186271239}
+        m_TargetAssemblyTypeName: GenericPuzzleInteractable, Assembly-CSharp
+        m_MethodName: CloseInstructions
+        m_Mode: 1
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 0
+        m_CallState: 2
 --- !u!114 &1926490275
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -13417,10 +13591,20 @@ PrefabInstance:
       propertyPath: m_Name
       value: Tv
       objectReference: {fileID: 0}
+    - target: {fileID: 919132149155446097, guid: 55c281187ae4e9a48aa44ba9def07a26, type: 3}
+      propertyPath: m_Layer
+      value: 3
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
-    m_AddedComponents: []
+    m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: 55c281187ae4e9a48aa44ba9def07a26, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 772914579}
+    - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: 55c281187ae4e9a48aa44ba9def07a26, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 772914580}
   m_SourcePrefab: {fileID: 100100000, guid: 55c281187ae4e9a48aa44ba9def07a26, type: 3}
 --- !u!1001 &2017671530
 PrefabInstance:
