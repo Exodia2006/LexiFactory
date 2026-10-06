@@ -4,11 +4,14 @@ using TMPro;
 public class RubikPuzzleInteractable : MonoBehaviour, IInteractable
 {
     [Header("UI Text Override")]
-    [SerializeField] private string hoverMessage = "Presiona E para interactuar";
+    [SerializeField] private string hoverMessage = "Presiona E para ver instrucciones";
 
-    [Header("World Space Canvas del Mensaje")]
-    [SerializeField] private GameObject promptCanvas; // Duplicado del Canvas con el texto flotante
-    [SerializeField] private TextMeshProUGUI promptText; // Texto dentro del Canvas (opcional si quieres cambiar el mensaje)
+    [Header("World Space Canvas del Mensaje Flotante")]
+    [SerializeField] private GameObject promptCanvas; // Texto 3D "Presiona E"
+    [SerializeField] private TextMeshProUGUI promptText;
+
+    [Header("Canvas de Instrucciones del Puzzle")]
+    [SerializeField] private GameObject instructionCanvas; // El Canvas de UI con el botón "Empezar"
 
     [Header("Cámaras")]
     [SerializeField] private Camera mainPlayerCamera;
@@ -21,39 +24,58 @@ public class RubikPuzzleInteractable : MonoBehaviour, IInteractable
     [Header("Referencia al Controlador del Acertijo")]
     [SerializeField] private RubikPuzzleController puzzleController;
 
+    private bool isInstructionOpen = false;
     private bool isInPuzzleView = false;
     private bool isPlayerLooking = false;
 
     private void Start()
     {
         if (rubikCamera != null) rubikCamera.gameObject.SetActive(false);
-        if (promptCanvas != null) promptCanvas.SetActive(false); // Iniciar oculto
+        if (promptCanvas != null) promptCanvas.SetActive(false);
+        if (instructionCanvas != null) instructionCanvas.SetActive(false);
 
         if (promptText != null) promptText.text = hoverMessage;
     }
 
     private void Update()
     {
-        // 1. Si el jugador está mirando el objeto (y no está metido en el puzzle), orientar el Canvas a la cámara
-        if (isPlayerLooking && !isInPuzzleView && promptCanvas != null && mainPlayerCamera != null)
+        // 1. Orientar el texto flotante "Presiona E" hacia la cámara mientras el jugador mira el objeto
+        if (isPlayerLooking && !isInstructionOpen && !isInPuzzleView && promptCanvas != null && mainPlayerCamera != null)
         {
-            // Apuntar el Canvas hacia la cámara principal para que siempre sea legible
-            promptCanvas.transform.rotation = Quaternion.LookRotation(promptCanvas.transform.position - mainPlayerCamera.transform.position);
+            promptCanvas.transform.rotation = Quaternion.LookRotation(
+                promptCanvas.transform.position - mainPlayerCamera.transform.position
+            );
         }
 
-        if (!isInPuzzleView) return;
-
-        // Salir con Escape
-        if (Input.GetKeyDown(KeyCode.Escape))
+        // 2. Si el panel de instrucciones está abierto y se presiona E
+        if (isInstructionOpen)
         {
-            ExitPuzzle();
-            return;
+            if (Input.GetKeyDown(KeyCode.E))
+            {
+                OnStartButtonPressed(); // Mismo método que usa el botón
+                return;
+            }
+
+            if (Input.GetKeyDown(KeyCode.Escape))
+            {
+                CloseInstructions();
+                return;
+            }
         }
 
-        // Clic izquierdo para interactuar con los botones del Rubik
-        if (Input.GetMouseButtonDown(0))
+        // 3. Si está metido en la cámara del puzzle
+        if (isInPuzzleView)
         {
-            DetectBlockClick();
+            if (Input.GetKeyDown(KeyCode.E) || Input.GetKeyDown(KeyCode.Escape))
+            {
+                ExitPuzzle();
+                return;
+            }
+
+            if (Input.GetMouseButtonDown(0))
+            {
+                DetectBlockClick();
+            }
         }
     }
 
@@ -62,16 +84,14 @@ public class RubikPuzzleInteractable : MonoBehaviour, IInteractable
         if (rubikCamera == null) return;
 
         Ray ray = rubikCamera.ScreenPointToRay(Input.mousePosition);
-
-        // RaycastAll para atravesar el collider de la estructura/máquina
         RaycastHit[] hits = Physics.RaycastAll(ray, 20f);
 
         foreach (var hit in hits)
         {
             if (hit.collider.TryGetComponent<RubikBlock>(out var block))
             {
-                block.ClickBlock(); // Ejecuta la lógica del bloque
-                break; // Detenerse al encontrar el primer bloque válido
+                block.ClickBlock();
+                break;
             }
         }
     }
@@ -81,8 +101,7 @@ public class RubikPuzzleInteractable : MonoBehaviour, IInteractable
 
     public void OnHandEnter()
     {
-        // Se activa cuando la mano / raycast del jugador mira al objeto
-        if (!isInPuzzleView)
+        if (!isInstructionOpen && !isInPuzzleView)
         {
             isPlayerLooking = true;
             if (promptCanvas != null) promptCanvas.SetActive(true);
@@ -91,22 +110,62 @@ public class RubikPuzzleInteractable : MonoBehaviour, IInteractable
 
     public void OnHandExit()
     {
-        // Se desactiva cuando el jugador se aleja o deja de mirar el objeto
         isPlayerLooking = false;
         if (promptCanvas != null) promptCanvas.SetActive(false);
     }
 
     public void Interact()
     {
-        if (!isInPuzzleView) EnterPuzzle();
+        if (!isInstructionOpen && !isInPuzzleView)
+        {
+            OpenInstructions();
+        }
+    }
+
+    public void OpenInstructions()
+    {
+        isInstructionOpen = true;
+
+        if (promptCanvas != null) promptCanvas.SetActive(false);
+        if (instructionCanvas != null) instructionCanvas.SetActive(true);
+
+        SetPlayerControls(false);
+
+        // Liberar cursor para hacer clic en el botón de UI
+        Cursor.lockState = CursorLockMode.None;
+        Cursor.visible = true;
+    }
+
+    // MÉTODO PUBLICO PARA ASIGNAR EN EL ONCLICK() DEL BOTÓN "EMPEZAR"
+    public void OnStartButtonPressed()
+    {
+        isInstructionOpen = false;
+
+        if (instructionCanvas != null)
+            instructionCanvas.SetActive(false);
+
+        EnterPuzzle();
+    }
+
+    // MÉTODO PUBLICO PARA ASIGNAR EN EL ONCLICK() DEL BOTÓN "CERRAR / X"
+    public void CloseInstructions()
+    {
+        isInstructionOpen = false;
+
+        if (instructionCanvas != null)
+            instructionCanvas.SetActive(false);
+
+        RestorePlayerState();
+
+        if (isPlayerLooking && promptCanvas != null)
+        {
+            promptCanvas.SetActive(true);
+        }
     }
 
     private void EnterPuzzle()
     {
         isInPuzzleView = true;
-
-        // Ocultar el mensaje flotante al entrar a la vista del puzzle
-        if (promptCanvas != null) promptCanvas.SetActive(false);
 
         if (mainPlayerCamera != null) mainPlayerCamera.gameObject.SetActive(false);
         if (rubikCamera != null) rubikCamera.gameObject.SetActive(true);
@@ -130,19 +189,33 @@ public class RubikPuzzleInteractable : MonoBehaviour, IInteractable
 
         if (puzzleController != null) puzzleController.DeactivatePuzzle();
 
-        Cursor.lockState = CursorLockMode.Locked;
-        Cursor.visible = false;
+        RestorePlayerState();
 
-        // Si al salir del puzzle la mano sigue apuntando al objeto, reactivar el mensaje
         if (isPlayerLooking && promptCanvas != null)
         {
             promptCanvas.SetActive(true);
         }
     }
 
+    // Restablece el cursor y recalibra la cámara del jugador
+    private void RestorePlayerState()
+    {
+        SetPlayerControls(true);
+
+        Cursor.lockState = CursorLockMode.Locked;
+        Cursor.visible = false;
+    }
+
     private void SetPlayerControls(bool state)
     {
-        if (playerMovementScript != null) playerMovementScript.enabled = state;
-        if (mouseLookScript != null) mouseLookScript.enabled = state;
+        if (playerMovementScript != null)
+            playerMovementScript.enabled = state;
+
+        if (mouseLookScript != null)
+        {
+            // Forzar reinicio del script para que Unity detecte el bloqueo del mouse
+            mouseLookScript.enabled = false;
+            if (state) mouseLookScript.enabled = true;
+        }
     }
 }

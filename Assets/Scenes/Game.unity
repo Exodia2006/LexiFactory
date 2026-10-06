@@ -824,7 +824,19 @@ MonoBehaviour:
   m_TargetGraphic: {fileID: 250993970}
   m_OnClick:
     m_PersistentCalls:
-      m_Calls: []
+      m_Calls:
+      - m_Target: {fileID: 730747423}
+        m_TargetAssemblyTypeName: RubikPuzzleInteractable, Assembly-CSharp
+        m_MethodName: OnStartButtonPressed
+        m_Mode: 1
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 0
+        m_CallState: 2
 --- !u!114 &250993970
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1345,7 +1357,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!224 &375700987
 RectTransform:
   m_ObjectHideFlags: 0
@@ -3926,6 +3938,7 @@ GameObject:
   - component: {fileID: 730747423}
   - component: {fileID: 730747422}
   - component: {fileID: 730747425}
+  - component: {fileID: 730747426}
   m_Layer: 3
   m_Name: Maquina de codigo
   m_TagString: Untagged
@@ -3994,6 +4007,7 @@ MonoBehaviour:
   hoverMessage: Resolver acertijo de colores
   promptCanvas: {fileID: 1798549175}
   promptText: {fileID: 817520385}
+  instructionCanvas: {fileID: 1308287395}
   mainPlayerCamera: {fileID: 2080584595}
   rubikCamera: {fileID: 1811953997}
   playerMovementScript: {fileID: 1716383084}
@@ -4020,6 +4034,23 @@ BoxCollider:
   serializedVersion: 3
   m_Size: {x: 1.1740367, y: 0.8644104, z: 1.8046026}
   m_Center: {x: -1.2681909, y: 0.96766543, z: -0.76117945}
+--- !u!114 &730747426
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 730747420}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 591a4158c731c9f4e8b87f96907aa7a2, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  instructionCanvas: {fileID: 1308287395}
+  hoverMessage: Presiona E para ver instrucciones
+  playerMovementScript: {fileID: 1716383084}
+  mouseLookScript: {fileID: 1716383084}
+  autoCloseWithE: 1
 --- !u!1 &732812127 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 6455586838732451190, guid: 9ef899e838815674690be050b5579a89, type: 3}
@@ -8709,7 +8740,19 @@ MonoBehaviour:
   m_TargetGraphic: {fileID: 1338217909}
   m_OnClick:
     m_PersistentCalls:
-      m_Calls: []
+      m_Calls:
+      - m_Target: {fileID: 730747423}
+        m_TargetAssemblyTypeName: RubikPuzzleInteractable, Assembly-CSharp
+        m_MethodName: CloseInstructions
+        m_Mode: 1
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 0
+        m_CallState: 2
 --- !u!114 &1338217909
 MonoBehaviour:
   m_ObjectHideFlags: 0
