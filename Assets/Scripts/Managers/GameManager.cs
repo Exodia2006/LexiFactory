@@ -147,4 +147,13 @@ public class GameManager : MonoBehaviour
         Application.Quit();
         Debug.Log("Quit Game");
     }
+
+    public char GetSecretDigitChar(int index)
+    {
+        if (index >= 0 && index < secretCode.Length)
+        {
+            return secretCode[index];
+        }
+        return '?';
+    }
 }

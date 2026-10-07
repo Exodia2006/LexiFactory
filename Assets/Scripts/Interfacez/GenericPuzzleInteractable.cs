@@ -153,19 +153,14 @@ public class GenericPuzzleInteractable : MonoBehaviour, IInteractable
         if (instructionCanvas != null)
             instructionCanvas.SetActive(false);
 
-        if (puzzleCamera != null)
-        {
-            EnterPuzzleView();
+        // Restaurar movimiento del jugador inmediatamente sin cambiar cámara
+        RestorePlayerState();
 
-            IPuzzleController controller = GetComponent<IPuzzleController>();
-            if (controller != null)
-            {
-                controller.ActivatePuzzle();
-            }
-        }
-        else
+        // Iniciar la lógica del audio/recolección
+        ToyBoxDropZone boxPuzzle = GetComponent<ToyBoxDropZone>();
+        if (boxPuzzle != null)
         {
-            RestorePlayerState();
+            boxPuzzle.StartPuzzle();
         }
     }
 
@@ -241,18 +236,6 @@ public class GenericPuzzleInteractable : MonoBehaviour, IInteractable
 
     private void DetectToyClick()
     {
-        if (puzzleCamera == null) return;
-
-        Ray ray = puzzleCamera.ScreenPointToRay(Input.mousePosition);
-        RaycastHit[] hits = Physics.RaycastAll(ray, 20f);
-
-        foreach (var hit in hits)
-        {
-            if (hit.collider.TryGetComponent<ToyBlock>(out var block))
-            {
-                block.OnClickBlock();
-                break;
-            }
-        }
+        
     }
 }
