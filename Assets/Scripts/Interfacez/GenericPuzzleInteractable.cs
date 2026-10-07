@@ -1,5 +1,6 @@
-using UnityEngine;
+using System.Collections;
 using TMPro;
+using UnityEngine;
 
 public class GenericPuzzleInteractable : MonoBehaviour, IInteractable
 {
@@ -11,12 +12,12 @@ public class GenericPuzzleInteractable : MonoBehaviour, IInteractable
     [SerializeField] private TextMeshProUGUI promptText;
 
     [Header("Canvas de Instrucciones del Puzzle")]
-    [SerializeField] private GameObject instructionCanvas; // Canvas del reto entregado por diseño
+    [SerializeField] private GameObject instructionCanvas;
 
     [Header("Configuración del Código")]
-    [SerializeField] private int codeDigitIndex = 2; // Index: 1 para Puzzle 2, 2 para Puzzle 3, 3 para Puzzle 4
+    [SerializeField] private int codeDigitIndex = 0; // Configurar en Inspector: 0, 1, 2 o 3
 
-    [Header("Cámaras (Si requiere cámara dedicada)")]
+    [Header("Cámaras (Opcional)")]
     [SerializeField] private Camera mainPlayerCamera;
     [SerializeField] private Camera puzzleCamera;
 
@@ -28,6 +29,7 @@ public class GenericPuzzleInteractable : MonoBehaviour, IInteractable
     private bool isInPuzzleView = false;
     private bool isPlayerLooking = false;
     private bool isSolved = false;
+    private bool canProcessInput = true; // Control para ignorar la 'E' del mismo frame
 
     private void Start()
     {
@@ -40,13 +42,16 @@ public class GenericPuzzleInteractable : MonoBehaviour, IInteractable
 
     private void Update()
     {
-        // 1. Orientar texto 3D "Presiona E" hacia la cámara
+        // 1. Orientar texto 3D hacia la cámara
         if (isPlayerLooking && !isInstructionOpen && !isInPuzzleView && promptCanvas != null && mainPlayerCamera != null)
         {
             promptCanvas.transform.rotation = Quaternion.LookRotation(
                 promptCanvas.transform.position - mainPlayerCamera.transform.position
             );
         }
+
+        // Si acabamos de abrir el panel en este fotograma, ignoramos el teclado hasta el siguiente frame
+        if (!canProcessInput) return;
 
         // 2. Control en el panel de Instrucciones
         if (isInstructionOpen)
@@ -106,30 +111,47 @@ public class GenericPuzzleInteractable : MonoBehaviour, IInteractable
         isInstructionOpen = true;
 
         if (promptCanvas != null) promptCanvas.SetActive(false);
-        if (instructionCanvas != null) instructionCanvas.SetActive(true);
 
-        // Desactivar controles del jugador primero
+        if (instructionCanvas != null)
+        {
+            instructionCanvas.SetActive(true);
+        }
+
         SetPlayerControls(false);
-
-        // Liberar y mostrar el cursor de forma explícita
         UnlockCursor();
+
+        // Evita que el 'Update()' lea la tecla 'E' en este mismo fotograma
+        StartCoroutine(EnableInputNextFrame());
     }
 
-    // ASIGNAR EN EL BOTÓN "EMPEZAR" DE CADA CANVAS
+    private IEnumerator EnableInputNextFrame()
+    {
+        canProcessInput = false;
+        yield return null; // Esperar al siguiente fotograma
+        canProcessInput = true;
+    }
+
+    private void SetPlayerControls(bool state)
+    {
+        if (playerMovementScript != null)
+            playerMovementScript.enabled = state;
+
+        if (mouseLookScript != null)
+            mouseLookScript.enabled = state;
+    }
+
     public void OnStartButtonPressed()
     {
         isInstructionOpen = false;
 
         if (instructionCanvas != null) instructionCanvas.SetActive(false);
 
-        // Si el reto usa cámara dedicada, la cambiamos; si no, devolvemos el control libre
         if (puzzleCamera != null)
         {
             EnterPuzzleView();
         }
         else
         {
-            // Para retos en 3D libre (como buscar juguetes en la sala), se devuelven los controles
             RestorePlayerState();
         }
     }
@@ -156,7 +178,6 @@ public class GenericPuzzleInteractable : MonoBehaviour, IInteractable
         if (puzzleCamera != null) puzzleCamera.gameObject.SetActive(true);
 
         SetPlayerControls(false);
-
         UnlockCursor();
     }
 
@@ -175,7 +196,6 @@ public class GenericPuzzleInteractable : MonoBehaviour, IInteractable
         }
     }
 
-    // LLAMAR ESTE MÉTODO CUANDO EL JUGADOR RESUELVA EL RETO
     public void CompletePuzzle()
     {
         if (isSolved) return;
@@ -204,17 +224,5 @@ public class GenericPuzzleInteractable : MonoBehaviour, IInteractable
 
         Cursor.lockState = CursorLockMode.Locked;
         Cursor.visible = false;
-    }
-
-    private void SetPlayerControls(bool state)
-    {
-        if (playerMovementScript != null)
-            playerMovementScript.enabled = state;
-
-        if (mouseLookScript != null)
-        {
-            mouseLookScript.enabled = false;
-            if (state) mouseLookScript.enabled = true;
-        }
     }
 }

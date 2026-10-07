@@ -65,19 +65,7 @@ public class GameManager : MonoBehaviour
 
     private void OnSceneLoaded(Scene scene, LoadSceneMode mode)
     {
-        // Al cargar la escena de juego, buscar el texto de la UI si la referencia se perdió
-        if (scene.name == gameSceneName)
-        {
-            if (codeDisplayText == null)
-            {
-                GameObject textObj = GameObject.FindWithTag("CodeUI"); // Opcional: asigna la etiqueta "CodeUI" al texto en la escena
-                if (textObj != null)
-                {
-                    codeDisplayText = textObj.GetComponent<TextMeshProUGUI>();
-                }
-            }
-            UpdateCodeUI();
-        }
+        
     }
 
     // --- LÓGICA DE REVELACIÓN DE CÓDIGO ---

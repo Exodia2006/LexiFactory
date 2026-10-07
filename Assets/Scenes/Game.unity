@@ -1438,7 +1438,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!224 &385557118
 RectTransform:
   m_ObjectHideFlags: 0
@@ -4055,14 +4055,18 @@ MonoBehaviour:
   m_GameObject: {fileID: 730747420}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 591a4158c731c9f4e8b87f96907aa7a2, type: 3}
+  m_Script: {fileID: 11500000, guid: 7088a26f29ffd3e4184a4ada5b299c60, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  instructionCanvas: {fileID: 1308287395}
   hoverMessage: Presiona E para ver instrucciones
+  promptCanvas: {fileID: 0}
+  promptText: {fileID: 0}
+  instructionCanvas: {fileID: 1308287395}
+  codeDigitIndex: 0
+  mainPlayerCamera: {fileID: 0}
+  puzzleCamera: {fileID: 0}
   playerMovementScript: {fileID: 1716383084}
-  mouseLookScript: {fileID: 1716383084}
-  autoCloseWithE: 1
+  mouseLookScript: {fileID: 2080584600}
 --- !u!1 &732812127 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 6455586838732451190, guid: 9ef899e838815674690be050b5579a89, type: 3}
@@ -6631,8 +6635,8 @@ RectTransform:
   m_LocalScale: {x: 0, y: 0, z: 0}
   m_ConstrainProportionsScale: 0
   m_Children:
-  - {fileID: 1612324767}
   - {fileID: 385557118}
+  - {fileID: 1612324767}
   - {fileID: 639708393}
   - {fileID: 542944783}
   - {fileID: 1390492223}
@@ -7782,11 +7786,11 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   hoverMessage: Presiona E para ver instrucciones
-  promptCanvas: {fileID: 0}
-  promptText: {fileID: 0}
+  promptCanvas: {fileID: 1798549175}
+  promptText: {fileID: 817520385}
   instructionCanvas: {fileID: 542944782}
   codeDigitIndex: 2
-  mainPlayerCamera: {fileID: 0}
+  mainPlayerCamera: {fileID: 2080584595}
   puzzleCamera: {fileID: 0}
   playerMovementScript: {fileID: 1716383084}
   mouseLookScript: {fileID: 2080584600}
@@ -12886,19 +12890,7 @@ MonoBehaviour:
   m_TargetGraphic: {fileID: 1926490275}
   m_OnClick:
     m_PersistentCalls:
-      m_Calls:
-      - m_Target: {fileID: 1186271239}
-        m_TargetAssemblyTypeName: GenericPuzzleInteractable, Assembly-CSharp
-        m_MethodName: CloseInstructions
-        m_Mode: 1
-        m_Arguments:
-          m_ObjectArgument: {fileID: 0}
-          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
-          m_IntArgument: 0
-          m_FloatArgument: 0
-          m_StringArgument: 
-          m_BoolArgument: 0
-        m_CallState: 2
+      m_Calls: []
 --- !u!114 &1926490275
 MonoBehaviour:
   m_ObjectHideFlags: 0

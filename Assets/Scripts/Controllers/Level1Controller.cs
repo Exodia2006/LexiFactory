@@ -16,4 +16,19 @@ public class Level1Controller : MonoBehaviour
             UnityEngine.SceneManagement.SceneManager.LoadScene("MainMenu");
         }
     }
+
+    public void RestartLevel()
+    {
+        if (GameManager.Instance != null)
+        {
+            GameManager.Instance.RestartLevel();
+        }
+        else
+        {
+            Time.timeScale = 1f;
+            Cursor.lockState = CursorLockMode.None;
+            Cursor.visible = true;
+            UnityEngine.SceneManagement.SceneManager.LoadScene(UnityEngine.SceneManagement.SceneManager.GetActiveScene().name);
+        }
+    }
 }
