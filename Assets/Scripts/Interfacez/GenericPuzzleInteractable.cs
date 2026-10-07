@@ -77,6 +77,12 @@ public class GenericPuzzleInteractable : MonoBehaviour, IInteractable
                 ExitPuzzle();
                 return;
             }
+
+            // Detectar clic izquierdo en los juguetes
+            if (Input.GetMouseButtonDown(0))
+            {
+                DetectToyClick();
+            }
         }
     }
 
@@ -144,11 +150,18 @@ public class GenericPuzzleInteractable : MonoBehaviour, IInteractable
     {
         isInstructionOpen = false;
 
-        if (instructionCanvas != null) instructionCanvas.SetActive(false);
+        if (instructionCanvas != null)
+            instructionCanvas.SetActive(false);
 
         if (puzzleCamera != null)
         {
             EnterPuzzleView();
+
+            IPuzzleController controller = GetComponent<IPuzzleController>();
+            if (controller != null)
+            {
+                controller.ActivatePuzzle();
+            }
         }
         else
         {
@@ -224,5 +237,22 @@ public class GenericPuzzleInteractable : MonoBehaviour, IInteractable
 
         Cursor.lockState = CursorLockMode.Locked;
         Cursor.visible = false;
+    }
+
+    private void DetectToyClick()
+    {
+        if (puzzleCamera == null) return;
+
+        Ray ray = puzzleCamera.ScreenPointToRay(Input.mousePosition);
+        RaycastHit[] hits = Physics.RaycastAll(ray, 20f);
+
+        foreach (var hit in hits)
+        {
+            if (hit.collider.TryGetComponent<ToyBlock>(out var block))
+            {
+                block.OnClickBlock();
+                break;
+            }
+        }
     }
 }
