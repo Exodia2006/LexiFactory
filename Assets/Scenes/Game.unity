@@ -1340,6 +1340,21 @@ BoxCollider:
   serializedVersion: 3
   m_Size: {x: 0.00664044, y: 0.012290518, z: 0.0069316844}
   m_Center: {x: 0.0000004566802, y: -0.0000693679, z: -0.00026824133}
+--- !u!114 &336028426
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 336028417}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0c356fcc851c13a43bec9464c5bbd8ae, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  blockID: CarToy
+  puzzleController: {fileID: 0}
+  pressedOffset: {x: 0, y: -0.05, z: 0}
 --- !u!1 &375700986
 GameObject:
   m_ObjectHideFlags: 0
@@ -3055,6 +3070,9 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: 29e0ea281b95cf347807862fb052be87, type: 3}
       insertIndex: -1
       addedObject: {fileID: 635205490}
+    - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: 29e0ea281b95cf347807862fb052be87, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 635205495}
   m_SourcePrefab: {fileID: 100100000, guid: 29e0ea281b95cf347807862fb052be87, type: 3}
 --- !u!1 &635205489 stripped
 GameObject:
@@ -3114,6 +3132,21 @@ Transform:
   m_CorrespondingSourceObject: {fileID: -8679921383154817045, guid: 29e0ea281b95cf347807862fb052be87, type: 3}
   m_PrefabInstance: {fileID: 635205488}
   m_PrefabAsset: {fileID: 0}
+--- !u!114 &635205495
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 635205489}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0c356fcc851c13a43bec9464c5bbd8ae, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  blockID: ShipBlock
+  puzzleController: {fileID: 0}
+  pressedOffset: {x: 0, y: -0.05, z: 0}
 --- !u!1 &639622151 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 8047384181044292204, guid: cb4021c96fcf08f49bf97a3061f563e3, type: 3}
@@ -5381,6 +5414,21 @@ Rigidbody:
   m_Interpolate: 0
   m_Constraints: 0
   m_CollisionDetection: 0
+--- !u!114 &862428200
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 862428193}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0c356fcc851c13a43bec9464c5bbd8ae, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  blockID: YellowBlock
+  puzzleController: {fileID: 0}
+  pressedOffset: {x: 0, y: -0.05, z: 0}
 --- !u!1 &862529188
 GameObject:
   m_ObjectHideFlags: 0
@@ -6380,7 +6428,19 @@ MonoBehaviour:
   m_TargetGraphic: {fileID: 995061220}
   m_OnClick:
     m_PersistentCalls:
-      m_Calls: []
+      m_Calls:
+      - m_Target: {fileID: 1186271239}
+        m_TargetAssemblyTypeName: GenericPuzzleInteractable, Assembly-CSharp
+        m_MethodName: OnStartButtonPressed
+        m_Mode: 1
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 0
+        m_CallState: 2
 --- !u!114 &995061220
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -7209,6 +7269,21 @@ Rigidbody:
   m_Interpolate: 0
   m_Constraints: 0
   m_CollisionDetection: 0
+--- !u!114 &1082317642
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1082317635}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0c356fcc851c13a43bec9464c5bbd8ae, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  blockID: PurpleBlock
+  puzzleController: {fileID: 0}
+  pressedOffset: {x: 0, y: -0.05, z: 0}
 --- !u!1 &1125482948
 GameObject:
   m_ObjectHideFlags: 0
@@ -7645,6 +7720,7 @@ GameObject:
   - component: {fileID: 1186271234}
   - component: {fileID: 1186271233}
   - component: {fileID: 1186271239}
+  - component: {fileID: 1186271240}
   m_Layer: 3
   m_Name: 'Caja '
   m_TagString: Untagged
@@ -7794,6 +7870,39 @@ MonoBehaviour:
   puzzleCamera: {fileID: 0}
   playerMovementScript: {fileID: 1716383084}
   mouseLookScript: {fileID: 2080584600}
+--- !u!114 &1186271240
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1186271232}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 018ba40ba56302646beb2bb28bffe80f, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  correctSequence:
+  - RedBlock
+  - BlueBlock
+  - YellowBlock
+  - ShipToy
+  - CarToy
+  - GreenBlock
+  - PurpleBlock
+  allBlocks:
+  - {fileID: 862428200}
+  - {fileID: 1376864585}
+  - {fileID: 1082317642}
+  - {fileID: 1815233066}
+  - {fileID: 1695580400}
+  - {fileID: 336028426}
+  - {fileID: 635205495}
+  audioSource: {fileID: 0}
+  clickSound: {fileID: 0}
+  successSound: {fileID: 0}
+  errorSound: {fileID: 0}
+  codeDigitIndex: 1
 --- !u!4 &1210791898 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: -8679921383154817045, guid: 8f76ac65f538a74499e2addd4ce0395c, type: 3}
@@ -8947,6 +9056,21 @@ Rigidbody:
   m_Interpolate: 0
   m_Constraints: 0
   m_CollisionDetection: 0
+--- !u!114 &1376864585
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1376864578}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0c356fcc851c13a43bec9464c5bbd8ae, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  blockID: GreenBlock
+  puzzleController: {fileID: 0}
+  pressedOffset: {x: 0, y: -0.05, z: 0}
 --- !u!1 &1380113861
 GameObject:
   m_ObjectHideFlags: 0
@@ -9416,30 +9540,45 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: 8047384181044292204, guid: cb4021c96fcf08f49bf97a3061f563e3, type: 3}
       insertIndex: -1
       addedObject: {fileID: 862428195}
+    - targetCorrespondingSourceObject: {fileID: 8047384181044292204, guid: cb4021c96fcf08f49bf97a3061f563e3, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 862428200}
     - targetCorrespondingSourceObject: {fileID: 879507524076390199, guid: cb4021c96fcf08f49bf97a3061f563e3, type: 3}
       insertIndex: -1
       addedObject: {fileID: 1376864581}
     - targetCorrespondingSourceObject: {fileID: 879507524076390199, guid: cb4021c96fcf08f49bf97a3061f563e3, type: 3}
       insertIndex: -1
       addedObject: {fileID: 1376864580}
+    - targetCorrespondingSourceObject: {fileID: 879507524076390199, guid: cb4021c96fcf08f49bf97a3061f563e3, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 1376864585}
     - targetCorrespondingSourceObject: {fileID: 4891843691277481821, guid: cb4021c96fcf08f49bf97a3061f563e3, type: 3}
       insertIndex: -1
       addedObject: {fileID: 1082317638}
     - targetCorrespondingSourceObject: {fileID: 4891843691277481821, guid: cb4021c96fcf08f49bf97a3061f563e3, type: 3}
       insertIndex: -1
       addedObject: {fileID: 1082317637}
+    - targetCorrespondingSourceObject: {fileID: 4891843691277481821, guid: cb4021c96fcf08f49bf97a3061f563e3, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 1082317642}
     - targetCorrespondingSourceObject: {fileID: -6567752997943987949, guid: cb4021c96fcf08f49bf97a3061f563e3, type: 3}
       insertIndex: -1
       addedObject: {fileID: 1815233062}
     - targetCorrespondingSourceObject: {fileID: -6567752997943987949, guid: cb4021c96fcf08f49bf97a3061f563e3, type: 3}
       insertIndex: -1
       addedObject: {fileID: 1815233061}
+    - targetCorrespondingSourceObject: {fileID: -6567752997943987949, guid: cb4021c96fcf08f49bf97a3061f563e3, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 1815233066}
     - targetCorrespondingSourceObject: {fileID: -8277022628454812086, guid: cb4021c96fcf08f49bf97a3061f563e3, type: 3}
       insertIndex: -1
       addedObject: {fileID: 1695580396}
     - targetCorrespondingSourceObject: {fileID: -8277022628454812086, guid: cb4021c96fcf08f49bf97a3061f563e3, type: 3}
       insertIndex: -1
       addedObject: {fileID: 1695580395}
+    - targetCorrespondingSourceObject: {fileID: -8277022628454812086, guid: cb4021c96fcf08f49bf97a3061f563e3, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 1695580400}
   m_SourcePrefab: {fileID: 100100000, guid: cb4021c96fcf08f49bf97a3061f563e3, type: 3}
 --- !u!1 &1437093848
 GameObject:
@@ -11166,6 +11305,21 @@ Rigidbody:
   m_Interpolate: 0
   m_Constraints: 0
   m_CollisionDetection: 0
+--- !u!114 &1695580400
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1695580393}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0c356fcc851c13a43bec9464c5bbd8ae, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  blockID: RedBlock
+  puzzleController: {fileID: 0}
+  pressedOffset: {x: 0, y: -0.05, z: 0}
 --- !u!1 &1707069461
 GameObject:
   m_ObjectHideFlags: 0
@@ -12468,6 +12622,21 @@ Rigidbody:
   m_Interpolate: 0
   m_Constraints: 0
   m_CollisionDetection: 0
+--- !u!114 &1815233066
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1815233059}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0c356fcc851c13a43bec9464c5bbd8ae, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  blockID: bluetoy
+  puzzleController: {fileID: 0}
+  pressedOffset: {x: 0, y: -0.05, z: 0}
 --- !u!1001 &1818659010
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -13194,6 +13363,9 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: 84a71b1c5f326c7468c5f2a2bcf904a4, type: 3}
       insertIndex: -1
       addedObject: {fileID: 336028423}
+    - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: 84a71b1c5f326c7468c5f2a2bcf904a4, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 336028426}
   m_SourcePrefab: {fileID: 100100000, guid: 84a71b1c5f326c7468c5f2a2bcf904a4, type: 3}
 --- !u!1001 &1948369064
 PrefabInstance:
@@ -13687,7 +13859,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!4 &2027772827
 Transform:
   m_ObjectHideFlags: 0
