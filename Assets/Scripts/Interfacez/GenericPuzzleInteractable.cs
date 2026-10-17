@@ -50,7 +50,6 @@ public class GenericPuzzleInteractable : MonoBehaviour, IInteractable
             );
         }
 
-        // Si acabamos de abrir el panel en este fotograma, ignoramos el teclado hasta el siguiente frame
         if (!canProcessInput) return;
 
         // 2. Control en el panel de Instrucciones
@@ -69,19 +68,13 @@ public class GenericPuzzleInteractable : MonoBehaviour, IInteractable
             }
         }
 
-        // 3. Control mientras está metido en la cámara del reto
+        // 3. Control mientras está metido en la cámara del reto (TV, Escritorio, etc.)
         if (isInPuzzleView)
         {
-            if (Input.GetKeyDown(KeyCode.E) || Input.GetKeyDown(KeyCode.Escape))
+            if (Input.GetKeyDown(KeyCode.Escape))
             {
                 ExitPuzzle();
                 return;
-            }
-
-            // Detectar clic izquierdo en los juguetes
-            if (Input.GetMouseButtonDown(0))
-            {
-                DetectToyClick();
             }
         }
     }
@@ -117,23 +110,18 @@ public class GenericPuzzleInteractable : MonoBehaviour, IInteractable
         isInstructionOpen = true;
 
         if (promptCanvas != null) promptCanvas.SetActive(false);
-
-        if (instructionCanvas != null)
-        {
-            instructionCanvas.SetActive(true);
-        }
+        if (instructionCanvas != null) instructionCanvas.SetActive(true);
 
         SetPlayerControls(false);
         UnlockCursor();
 
-        // Evita que el 'Update()' lea la tecla 'E' en este mismo fotograma
         StartCoroutine(EnableInputNextFrame());
     }
 
     private IEnumerator EnableInputNextFrame()
     {
         canProcessInput = false;
-        yield return null; // Esperar al siguiente fotograma
+        yield return null;
         canProcessInput = true;
     }
 
@@ -153,14 +141,37 @@ public class GenericPuzzleInteractable : MonoBehaviour, IInteractable
         if (instructionCanvas != null)
             instructionCanvas.SetActive(false);
 
-        // Restaurar movimiento del jugador inmediatamente sin cambiar cámara
-        RestorePlayerState();
+        // 1. Si el objeto tiene cámara propia de reto (como el TV o Escritorio), enfocamos
+        if (puzzleCamera != null)
+        {
+            EnterPuzzleView();
+        }
+        else
+        {
+            // Puzzles que se juegan caminando en primera persona (ej: Caja de Juguetes)
+            RestorePlayerState();
+        }
 
-        // Iniciar la lógica del audio/recolección
+        // 2. Iniciar la lógica del controlador correspondiente
+        TVPuzzleController tvPuzzle = GetComponent<TVPuzzleController>();
+        if (tvPuzzle != null)
+        {
+            tvPuzzle.StartPuzzle();
+            return;
+        }
+
+       // DeskPuzzleController deskPuzzle = GetComponent<DeskPuzzleController>();
+        //if (deskPuzzle != null)
+        //{
+          //  deskPuzzle.StartPuzzle();
+            //return;
+        //}
+
         ToyBoxDropZone boxPuzzle = GetComponent<ToyBoxDropZone>();
         if (boxPuzzle != null)
         {
             boxPuzzle.StartPuzzle();
+            return;
         }
     }
 
@@ -178,7 +189,7 @@ public class GenericPuzzleInteractable : MonoBehaviour, IInteractable
         }
     }
 
-    private void EnterPuzzleView()
+    public void EnterPuzzleView()
     {
         isInPuzzleView = true;
 
@@ -196,28 +207,19 @@ public class GenericPuzzleInteractable : MonoBehaviour, IInteractable
         if (puzzleCamera != null) puzzleCamera.gameObject.SetActive(false);
         if (mainPlayerCamera != null) mainPlayerCamera.gameObject.SetActive(true);
 
+        // Notificar al TV si se cancela con Escape
+        TVPuzzleController tvPuzzle = GetComponent<TVPuzzleController>();
+        if (tvPuzzle != null && tvPuzzle.IsActive)
+        {
+            tvPuzzle.StopPuzzle();
+        }
+
         RestorePlayerState();
 
         if (isPlayerLooking && promptCanvas != null)
         {
             promptCanvas.SetActive(true);
         }
-    }
-
-    public void CompletePuzzle()
-    {
-        if (isSolved) return;
-
-        isSolved = true;
-
-        if (ScreenFlash.Instance != null)
-            ScreenFlash.Instance.FlashSuccess();
-
-        if (GameManager.Instance != null)
-            GameManager.Instance.RevealDigit(codeDigitIndex);
-
-        if (isInPuzzleView)
-            ExitPuzzle();
     }
 
     private void UnlockCursor()
@@ -232,10 +234,5 @@ public class GenericPuzzleInteractable : MonoBehaviour, IInteractable
 
         Cursor.lockState = CursorLockMode.Locked;
         Cursor.visible = false;
-    }
-
-    private void DetectToyClick()
-    {
-        
     }
 }
