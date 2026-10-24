@@ -19,7 +19,7 @@ public class ToyItem : MonoBehaviour
     private void Awake()
     {
         rb = GetComponent<Rigidbody>();
-        allColliders = GetComponentsInChildren<Collider>();
+        allColliders = GetComponentsInChildren<Collider>(true);
 
         // Guardar la transformación inicial en la escena
         initialPosition = transform.position;
@@ -30,12 +30,20 @@ public class ToyItem : MonoBehaviour
 
     public void Pickup(Transform handHoldPoint)
     {
-        if (rb != null) rb.isKinematic = true;
+        if (rb != null)
+        {
+            rb.isKinematic = true;
+            rb.linearVelocity = Vector3.zero;
+            rb.angularVelocity = Vector3.zero;
+        }
 
         // Desactivar colliders para que no tapen el Raycast
-        foreach (var col in allColliders)
+        if (allColliders != null)
         {
-            if (col != null) col.enabled = false;
+            foreach (var col in allColliders)
+            {
+                if (col != null) col.enabled = false;
+            }
         }
 
         SetLayerRecursively(gameObject, LayerMask.NameToLayer("Ignore Raycast"));
@@ -45,6 +53,27 @@ public class ToyItem : MonoBehaviour
         transform.localRotation = Quaternion.identity;
     }
 
+    public void Drop()
+    {
+        transform.SetParent(null);
+        SetLayerRecursively(gameObject, initialLayer);
+
+        if (allColliders != null)
+        {
+            foreach (var col in allColliders)
+            {
+                if (col != null) col.enabled = true;
+            }
+        }
+
+        if (rb != null)
+        {
+            rb.isKinematic = false;
+            rb.linearVelocity = Vector3.zero;
+            rb.angularVelocity = Vector3.zero;
+        }
+    }
+
     public void PlaceInBox(Transform targetBoxSpot)
     {
         // Cambiar parentesco a la caja
@@ -52,7 +81,7 @@ public class ToyItem : MonoBehaviour
         transform.localPosition = Vector3.zero;
         transform.localRotation = Quaternion.identity;
 
-        // Reactivar colliders por si acaso
+        // Reactivar colliders
         if (allColliders != null)
         {
             foreach (var col in allColliders)
@@ -65,15 +94,20 @@ public class ToyItem : MonoBehaviour
     // Método para devolver el juguete a su sitio original al fallar
     public void ResetToInitialPosition()
     {
+        gameObject.SetActive(true);
+
         transform.SetParent(initialParent);
         transform.position = initialPosition;
         transform.rotation = initialRotation;
 
         SetLayerRecursively(gameObject, initialLayer);
 
-        foreach (var col in allColliders)
+        if (allColliders != null)
         {
-            if (col != null) col.enabled = true;
+            foreach (var col in allColliders)
+            {
+                if (col != null) col.enabled = true;
+            }
         }
 
         if (rb != null)
@@ -84,7 +118,7 @@ public class ToyItem : MonoBehaviour
         }
     }
 
-    private void SetLayerRecursively(GameObject obj, int newLayer)
+    public void SetLayerRecursively(GameObject obj, int newLayer)
     {
         if (obj == null) return;
         obj.layer = newLayer;

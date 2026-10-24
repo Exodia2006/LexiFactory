@@ -28,7 +28,36 @@ public class GameManager : MonoBehaviour
     [Header("Door Code Puzzle System")]
     [SerializeField] private TextMeshProUGUI codeDisplayText; // Arrastra aquí el texto de la UI que muestra "? ? ? ?"
     [SerializeField] private string secretCode = "7392";
+    public string SecretCode => secretCode;
     private char[] currentDiscoveredCode = new char[] { '?', '?', '?', '?' };
+
+    // --- CONTROL DE CONCURRENCIA DE PUZZLES (EXCLUSIVIDAD) ---
+    public static object ActivePuzzle { get; private set; }
+    public static bool IsAnyPuzzleActive => ActivePuzzle != null;
+
+    public static bool RegisterActivePuzzle(object puzzle)
+    {
+        if (ActivePuzzle != null && ActivePuzzle != puzzle)
+        {
+            Debug.LogWarning($"[GameManager] Bloqueada activación de '{puzzle?.GetType().Name}' porque '{ActivePuzzle.GetType().Name}' ya está activo.");
+            return false;
+        }
+        ActivePuzzle = puzzle;
+        return true;
+    }
+
+    public static void UnregisterActivePuzzle(object puzzle)
+    {
+        if (ActivePuzzle == puzzle)
+        {
+            ActivePuzzle = null;
+        }
+    }
+
+    public static bool IsThisPuzzleActive(object puzzle)
+    {
+        return ActivePuzzle == puzzle;
+    }
 
     private void Awake()
     {
@@ -141,13 +170,24 @@ public class GameManager : MonoBehaviour
 
     private void CheckVictoryCondition()
     {
-        string current = new string(currentDiscoveredCode);
-        if (current == secretCode)
+        if (AreAllPuzzlesSolved())
         {
-            Debug.Log("¡Todos los acertijos resueltos! Puerta desbloqueada.");
-            ChangeState(GameState.Victory);
+            Debug.Log("[GameManager] ¡Todos los acertijos resueltos! El teclado de la puerta final ha sido habilitado.");
         }
     }
+
+    public bool AreAllPuzzlesSolved()
+    {
+        if (currentDiscoveredCode == null || currentDiscoveredCode.Length == 0) return false;
+        for (int i = 0; i < currentDiscoveredCode.Length; i++)
+        {
+            if (currentDiscoveredCode[i] == '?')
+                return false;
+        }
+        return true;
+    }
+
+    public string GetSecretCode() => secretCode;
 
     public void ChangeState(GameState newState)
     {

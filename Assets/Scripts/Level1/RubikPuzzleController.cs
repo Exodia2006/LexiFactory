@@ -80,9 +80,14 @@ public class RubikPuzzleController : MonoBehaviour
 
             RubikPuzzleInteractable puzzleInteractable = GetComponentInParent<RubikPuzzleInteractable>();
             if (puzzleInteractable != null)
+            {
+                puzzleInteractable.MarkAsSolved();
                 puzzleInteractable.ExitPuzzle();
+            }
             else
+            {
                 DeactivatePuzzle();
+            }
         }
         else
         {

@@ -31,6 +31,12 @@ public class HandInteraction : MonoBehaviour
         {
             if (hit.TryGetComponent<IInteractable>(out var interactable))
             {
+                // Exclusividad: Si hay un puzzle activo y este interactuable no es el puzzle actual, ignorarlo
+                if (GameManager.IsAnyPuzzleActive && !GameManager.IsThisPuzzleActive(interactable))
+                {
+                    continue;
+                }
+
                 foundInteractable = interactable;
                 targetCollider = hit;
                 break; // Encontramos el interactuable válido
@@ -64,6 +70,11 @@ public class HandInteraction : MonoBehaviour
     {
         if (currentInteractable != null && (Input.GetKeyDown(interactKey)))
         {
+            if (GameManager.IsAnyPuzzleActive && !GameManager.IsThisPuzzleActive(currentInteractable))
+            {
+                return;
+            }
+
             currentInteractable.Interact();
         }
     }
