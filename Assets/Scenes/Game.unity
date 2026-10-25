@@ -10874,7 +10874,7 @@ MonoBehaviour:
   doorKeypadCamera: {fileID: 511814372}
   mainPlayerCamera: {fileID: 2080584595}
   displayText3D: {fileID: 0}
-  displayText: {fileID: 0}
+  displayText: {fileID: 1445920743}
   normalColor: {r: 1, g: 1, b: 1, a: 1}
   errorColor: {r: 1, g: 0, b: 0, a: 1}
   successColor: {r: 0, g: 1, b: 0, a: 1}
@@ -10884,12 +10884,12 @@ MonoBehaviour:
   rayDistance3D: 20
   keypadCanvas: {fileID: 0}
   digitButtons: []
+  closeButton: {fileID: 0}
   clearButton: {fileID: 0}
   submitButton: {fileID: 0}
-  closeButton: {fileID: 0}
   maxDigits: 4
-  autoSubmitOn4Digits: 0
-  lockedSound: {fileID: 0}
+  showPlaceholderDashes: 1
+  lockedSound: {fileID: 8300000, guid: 9ab75b16595cd9c47b0f44610ae242de, type: 3}
   lockedFeedbackContainer: {fileID: 0}
   lockedFeedbackText: {fileID: 0}
   lockedMessage: "A\xFAn no tienes todos los c\xF3digos. Resuelve los dem\xE1s acertijos
@@ -12534,12 +12534,12 @@ MonoBehaviour:
   clueAudios: []
   instructionAudio: {fileID: 8300000, guid: 9fa1c7b19f73d214baad0ccb37a13efe, type: 3}
   toyInitialSpawnPoints:
-  - {fileID: 1376864583}
-  - {fileID: 1082317640}
-  - {fileID: 1815233064}
   - {fileID: 635205492}
-  - {fileID: 1695580398}
+  - {fileID: 1082317640}
+  - {fileID: 1376864583}
   - {fileID: 336028422}
+  - {fileID: 1695580398}
+  - {fileID: 1815233064}
   allToysInScene:
   - {fileID: 0}
   - {fileID: 1376864582}
