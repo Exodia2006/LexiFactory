@@ -4162,7 +4162,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!114 &511814369
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -6302,6 +6302,8 @@ MonoBehaviour:
   instructionCanvas: {fileID: 1308287395}
   mainPlayerCamera: {fileID: 2080584595}
   rubikCamera: {fileID: 1811953997}
+  cameraTransitionDuration: 0.6
+  useSmoothCameraTransition: 1
   playerMovementScript: {fileID: 1716383084}
   mouseLookScript: {fileID: 2080584600}
   puzzleController: {fileID: 730747422}
@@ -6351,6 +6353,8 @@ MonoBehaviour:
   codeDigitIndex: 0
   mainPlayerCamera: {fileID: 0}
   puzzleCamera: {fileID: 0}
+  cameraTransitionDuration: 0.6
+  useSmoothCameraTransition: 1
   playerMovementScript: {fileID: 1716383084}
   mouseLookScript: {fileID: 2080584600}
 --- !u!1 &732812127 stripped
@@ -7057,6 +7061,8 @@ MonoBehaviour:
   codeDigitIndex: 2
   mainPlayerCamera: {fileID: 2080584595}
   puzzleCamera: {fileID: 1408908180}
+  cameraTransitionDuration: 0.6
+  useSmoothCameraTransition: 1
   playerMovementScript: {fileID: 1716383084}
   mouseLookScript: {fileID: 2080584600}
 --- !u!1 &776265690
@@ -8006,7 +8012,7 @@ RectTransform:
   m_GameObject: {fileID: 827299663}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_LocalScale: {x: 0.44314, y: 0.44314, z: 0.44314}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 450835232}
@@ -10873,6 +10879,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   doorKeypadCamera: {fileID: 511814372}
   mainPlayerCamera: {fileID: 2080584595}
+  cameraTransitionDuration: 0.6
+  useSmoothCameraTransition: 1
   displayText3D: {fileID: 0}
   displayText: {fileID: 1445920743}
   normalColor: {r: 1, g: 1, b: 1, a: 1}
@@ -10901,9 +10909,13 @@ MonoBehaviour:
   doorAnimator: {fileID: 0}
   openDoorTriggerName: OpenDoor
   doorCollider: {fileID: 0}
+  victoryPanelController: {fileID: 0}
   victoryPanel: {fileID: 163587023}
-  victoryTimeText: {fileID: 0}
-  victoryTimePrefix: 'Tiempo de escape: 5'
+  currentTimeText: {fileID: 1387879259}
+  bestTimeText: {fileID: 1852346039}
+  newRecordBadge: {fileID: 0}
+  currentTimePrefix: 'Tiempo actual: '
+  bestTimePrefix: 'Mejor tiempo: '
   victoryRestartButton: {fileID: 0}
   victoryMainMenuButton: {fileID: 0}
   victoryQuitButton: {fileID: 0}
@@ -12510,6 +12522,8 @@ MonoBehaviour:
   codeDigitIndex: 2
   mainPlayerCamera: {fileID: 2080584595}
   puzzleCamera: {fileID: 0}
+  cameraTransitionDuration: 0.6
+  useSmoothCameraTransition: 1
   playerMovementScript: {fileID: 1716383084}
   mouseLookScript: {fileID: 2080584600}
 --- !u!114 &1186271241
@@ -12793,6 +12807,9 @@ MonoBehaviour:
   gameSceneName: Game
   codeDisplayText: {fileID: 534447283}
   secretCode: 7392
+  elapsedTime: 0
+  isTimerRunning: 0
+  isNewRecord: 0
 --- !u!4 &1242725448
 Transform:
   m_ObjectHideFlags: 0
@@ -16111,6 +16128,8 @@ MonoBehaviour:
   codeDigitIndex: 2
   mainPlayerCamera: {fileID: 2080584595}
   puzzleCamera: {fileID: 1786696228}
+  cameraTransitionDuration: 0.6
+  useSmoothCameraTransition: 1
   playerMovementScript: {fileID: 1716383084}
   mouseLookScript: {fileID: 1786696226}
 --- !u!65 &1542949795
@@ -18919,7 +18938,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!114 &1811953995
 MonoBehaviour:
   m_ObjectHideFlags: 0

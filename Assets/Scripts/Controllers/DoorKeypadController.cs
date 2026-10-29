@@ -1,6 +1,7 @@
 using System.Collections;
 using UnityEngine;
 using UnityEngine.UI;
+using UnityEngine.Serialization;
 using TMPro;
 
 public class DoorKeypadController : MonoBehaviour, IInteractable
@@ -10,6 +11,13 @@ public class DoorKeypadController : MonoBehaviour, IInteractable
     [SerializeField] private Camera doorKeypadCamera;
     [Tooltip("Cámara principal en primera persona del jugador")]
     [SerializeField] private Camera mainPlayerCamera;
+
+    [Header("Transición Suave de Cámara")]
+    [Tooltip("Duración de la transición suave entre la cámara del jugador y el candado")]
+    [Range(0.1f, 2f)]
+    [SerializeField] private float cameraTransitionDuration = 0.6f;
+    [Tooltip("Habilitar transición suave usando CameraTransitionManager")]
+    [SerializeField] private bool useSmoothCameraTransition = true;
 
     [Header("Display del Candado 3D")]
     [Tooltip("Texto 3D digital en el candado físico de la escena (TextMeshPro)")]
@@ -68,13 +76,22 @@ public class DoorKeypadController : MonoBehaviour, IInteractable
     [Tooltip("Collider físico de la puerta a desactivar tras abrir")]
     [SerializeField] private Collider doorCollider;
 
-    [Header("Pantalla de Victoria y Escape")]
+    [Header("Pantalla de Victoria y Récords")]
+    [Tooltip("Controlador modular dedicado de Victoria (opcional)")]
+    [SerializeField] private VictoryPanelController victoryPanelController;
     [Tooltip("Panel principal de Victoria en el Canvas del juego")]
     [SerializeField] private GameObject victoryPanel;
-    [Tooltip("Texto donde se mostrará el tiempo de escape en formato mm:ss")]
-    [SerializeField] private TextMeshProUGUI victoryTimeText;
-    [Tooltip("Prefijo del texto de victoria (ej: 'Tiempo de escape: ')")]
-    [SerializeField] private string victoryTimePrefix = "Tiempo de escape: ";
+
+    [Tooltip("Texto donde se proyecta el tiempo demorado en la partida actual")]
+    [FormerlySerializedAs("victoryTimeText")]
+    [SerializeField] private TextMeshProUGUI currentTimeText;
+
+    [Tooltip("Texto donde se proyecta el mejor tiempo histórico")]
+    [SerializeField] private TextMeshProUGUI bestTimeText;
+
+    [Tooltip("Insignia / icono / texto opcional de '¡Nuevo Récord!'")]
+    [SerializeField] private GameObject newRecordBadge;
+
     [SerializeField] private Button victoryRestartButton;
     [SerializeField] private Button victoryMainMenuButton;
     [SerializeField] private Button victoryQuitButton;
@@ -99,9 +116,11 @@ public class DoorKeypadController : MonoBehaviour, IInteractable
     // Estado del teclado
     public bool IsKeypadOpen { get; private set; } = false;
     public bool IsDoorOpened { get; private set; } = false;
+    public bool IsTransitioning => isTransitioning;
 
     private string currentInput = "";
     private bool isProcessing = false;
+    private bool isTransitioning = false;
     private bool isPlayerLooking = false;
     private Coroutine lockedFeedbackCoroutine;
 
@@ -110,8 +129,7 @@ public class DoorKeypadController : MonoBehaviour, IInteractable
         if (audioSource == null)
             audioSource = GetComponent<AudioSource>();
 
-        if (mainPlayerCamera == null)
-            mainPlayerCamera = Camera.main;
+        ResolvePlayerCamera();
 
         // Asegurar que la cámara dedicada del candado comience desactivada
         if (doorKeypadCamera != null)
@@ -120,10 +138,7 @@ public class DoorKeypadController : MonoBehaviour, IInteractable
 
     private void Start()
     {
-        if (keypadCanvas != null) keypadCanvas.SetActive(false);
-        if (victoryPanel != null) victoryPanel.SetActive(false);
-        if (promptContainer != null) promptContainer.SetActive(false);
-        if (lockedFeedbackContainer != null) lockedFeedbackContainer.SetActive(false);
+        EnsureCleanState();
 
         // Auto-detectar scripts de movimiento del jugador si están vacíos
         if (playerMovementScript == null)
@@ -132,7 +147,7 @@ public class DoorKeypadController : MonoBehaviour, IInteractable
         if (mouseLookScript == null)
             mouseLookScript = FindFirstObjectByType<MouseLook>();
 
-        // Conectar botones si se asignaron directamente en el Inspector
+        // Conectar botones del teclado numérico si se asignaron directamente en el Inspector
         if (digitButtons != null)
         {
             for (int i = 0; i < digitButtons.Length; i++)
@@ -186,12 +201,62 @@ public class DoorKeypadController : MonoBehaviour, IInteractable
         UpdateDisplay();
     }
 
+    private void OnDisable()
+    {
+        CleanupOnSceneExit();
+    }
+
+    private void OnDestroy()
+    {
+        CleanupOnSceneExit();
+    }
+
+    private void CleanupOnSceneExit()
+    {
+        GameManager.UnregisterActivePuzzle(this);
+        StopAllCoroutines();
+        isTransitioning = false;
+        IsKeypadOpen = false;
+
+        if (doorKeypadCamera != null)
+            doorKeypadCamera.gameObject.SetActive(false);
+
+        if (keypadCanvas != null)
+            keypadCanvas.SetActive(false);
+    }
+
+    public void EnsureCleanState()
+    {
+        IsKeypadOpen = false;
+        isProcessing = false;
+        isTransitioning = false;
+        isPlayerLooking = false;
+
+        if (doorKeypadCamera != null)
+            doorKeypadCamera.gameObject.SetActive(false);
+
+        if (keypadCanvas != null)
+            keypadCanvas.SetActive(false);
+
+        if (victoryPanel != null)
+            victoryPanel.SetActive(false);
+
+        if (promptContainer != null)
+            promptContainer.SetActive(false);
+
+        if (lockedFeedbackContainer != null)
+            lockedFeedbackContainer.SetActive(false);
+    }
+
     private void Update()
     {
+        // Si la cámara está en proceso de transición, bloquear completamente inputs para evitar inconsistencias
+        if (isTransitioning) return;
+
         // 1. Orientar prompt flotante hacia la cámara principal del jugador
         if (isPlayerLooking && !IsKeypadOpen && !IsDoorOpened && promptContainer != null)
         {
-            Camera activeCam = mainPlayerCamera != null ? mainPlayerCamera : Camera.main;
+            Camera activeCam = GetActivePlayerCamera();
             if (activeCam != null)
             {
                 promptContainer.transform.rotation = Quaternion.LookRotation(
@@ -206,6 +271,7 @@ public class DoorKeypadController : MonoBehaviour, IInteractable
             // Salir con tecla Escape
             if (Input.GetKeyDown(KeyCode.Escape))
             {
+                GameManager.ConsumeEscape();
                 PressCloseButton();
                 return;
             }
@@ -243,7 +309,7 @@ public class DoorKeypadController : MonoBehaviour, IInteractable
     {
         if (Input.GetMouseButtonDown(0))
         {
-            Camera cam = doorKeypadCamera != null ? doorKeypadCamera : (mainPlayerCamera != null ? mainPlayerCamera : Camera.main);
+            Camera cam = doorKeypadCamera != null ? doorKeypadCamera : GetActivePlayerCamera();
             if (cam == null) return;
 
             Ray ray = cam.ScreenPointToRay(Input.mousePosition);
@@ -299,7 +365,7 @@ public class DoorKeypadController : MonoBehaviour, IInteractable
 
     public void Interact()
     {
-        if (IsDoorOpened || isProcessing) return;
+        if (IsDoorOpened || isProcessing || isTransitioning) return;
 
         // Comprobación de exclusividad de puzzles (no permitir si hay otro activo)
         if (GameManager.IsAnyPuzzleActive && !GameManager.IsThisPuzzleActive(this))
@@ -328,7 +394,6 @@ public class DoorKeypadController : MonoBehaviour, IInteractable
             return GameManager.Instance.AreAllPuzzlesSolved();
         }
 
-        // Fallback si no existe GameManager en la escena
         return true;
     }
 
@@ -336,15 +401,12 @@ public class DoorKeypadController : MonoBehaviour, IInteractable
     {
         Debug.LogWarning($"[DoorKeypad] {lockedMessage}");
 
-        // 1. Sonido de acceso denegado
         if (audioSource != null && lockedSound != null)
             audioSource.PlayOneShot(lockedSound);
 
-        // 2. Destello sutil de error si existe ScreenFlash
         if (ScreenFlash.Instance != null)
             ScreenFlash.Instance.FlashError();
 
-        // 3. Feedback visual flotante / HUD
         if (FloatingTextManager.Instance != null)
         {
             FloatingTextManager.Instance.ShowText(lockedMessage, transform.position + Vector3.up * 0.4f);
@@ -373,41 +435,68 @@ public class DoorKeypadController : MonoBehaviour, IInteractable
 
     private void OpenKeypad()
     {
+        if (isTransitioning || IsKeypadOpen) return;
+
         // Registrar este candado como el puzzle activo global
         GameManager.RegisterActivePuzzle(this);
-
-        IsKeypadOpen = true;
-        isProcessing = false;
 
         if (promptContainer != null)
             promptContainer.SetActive(false);
 
-        // Desactivar cámara principal y activar la cámara dedicada del candado 3D
-        if (mainPlayerCamera == null) mainPlayerCamera = Camera.main;
-        if (mainPlayerCamera != null) mainPlayerCamera.gameObject.SetActive(false);
-        if (doorKeypadCamera != null) doorKeypadCamera.gameObject.SetActive(true);
-
-        if (keypadCanvas != null)
-            keypadCanvas.SetActive(true);
-
-        // Bloquear movimiento y vista del jugador
+        // Bloquear movimiento y vista del jugador de inmediato
         SetPlayerControls(false);
 
-        // Desbloquear cursor para hacer clic directamente en los botones 3D del candado
-        Cursor.lockState = CursorLockMode.None;
-        Cursor.visible = true;
+        Camera activeCam = GetActivePlayerCamera();
 
-        // Limpiar display digital
-        currentInput = "";
-        SetDisplayColor(normalColor);
-        UpdateDisplay();
+        if (useSmoothCameraTransition && doorKeypadCamera != null && activeCam != null)
+        {
+            isTransitioning = true;
+            CameraTransitionManager.Instance.Transition(activeCam, doorKeypadCamera, cameraTransitionDuration, () =>
+            {
+                isTransitioning = false;
+                IsKeypadOpen = true;
+                isProcessing = false;
 
-        Debug.Log("[DoorKeypad] Candado 3D abierto. Cámara dedicada activada.");
+                if (keypadCanvas != null)
+                    keypadCanvas.SetActive(true);
+
+                // Desbloquear cursor para hacer clic directamente en los botones 3D del candado
+                Cursor.lockState = CursorLockMode.None;
+                Cursor.visible = true;
+
+                // Limpiar display digital
+                currentInput = "";
+                SetDisplayColor(normalColor);
+                UpdateDisplay();
+
+                Debug.Log("[DoorKeypad] Candado 3D abierto. Transición suave de cámara completada.");
+            });
+        }
+        else
+        {
+            IsKeypadOpen = true;
+            isProcessing = false;
+
+            if (activeCam != null) activeCam.gameObject.SetActive(false);
+            if (doorKeypadCamera != null) doorKeypadCamera.gameObject.SetActive(true);
+
+            if (keypadCanvas != null)
+                keypadCanvas.SetActive(true);
+
+            Cursor.lockState = CursorLockMode.None;
+            Cursor.visible = true;
+
+            currentInput = "";
+            SetDisplayColor(normalColor);
+            UpdateDisplay();
+
+            Debug.Log("[DoorKeypad] Candado 3D abierto. Cámara dedicada activada en seco.");
+        }
     }
 
     public void PressCloseButton()
     {
-        if (!IsKeypadOpen) return;
+        if (isTransitioning || !IsKeypadOpen) return;
 
         IsKeypadOpen = false;
         isProcessing = false;
@@ -415,27 +504,54 @@ public class DoorKeypadController : MonoBehaviour, IInteractable
         // Liberar el estado de puzzle activo en GameManager
         GameManager.UnregisterActivePuzzle(this);
 
+        // Ocultar Canvas del teclado de inmediato
         if (keypadCanvas != null)
             keypadCanvas.SetActive(false);
 
-        // Restaurar cámaras: apagar cámara dedicada del candado y reactivar cámara del jugador
-        if (doorKeypadCamera != null) doorKeypadCamera.gameObject.SetActive(false);
-        if (mainPlayerCamera != null) mainPlayerCamera.gameObject.SetActive(true);
+        Camera activeCam = GetActivePlayerCamera();
 
-        if (!IsDoorOpened)
+        if (useSmoothCameraTransition && doorKeypadCamera != null && activeCam != null)
         {
-            // Restaurar controles del jugador y bloquear cursor en el centro
-            SetPlayerControls(true);
-            Cursor.lockState = CursorLockMode.Locked;
-            Cursor.visible = false;
-
-            if (isPlayerLooking && promptContainer != null)
+            isTransitioning = true;
+            CameraTransitionManager.Instance.Transition(doorKeypadCamera, activeCam, cameraTransitionDuration, () =>
             {
-                promptContainer.SetActive(true);
-            }
-        }
+                isTransitioning = false;
 
-        Debug.Log("[DoorKeypad] Candado 3D cerrado. Cámara y control devueltos al jugador.");
+                if (!IsDoorOpened)
+                {
+                    // Restaurar controles del jugador y bloquear cursor en el centro
+                    SetPlayerControls(true);
+                    Cursor.lockState = CursorLockMode.Locked;
+                    Cursor.visible = false;
+
+                    if (isPlayerLooking && promptContainer != null)
+                    {
+                        promptContainer.SetActive(true);
+                    }
+                }
+
+                Debug.Log("[DoorKeypad] Candado 3D cerrado. Transición suave de retorno completada.");
+            });
+        }
+        else
+        {
+            if (doorKeypadCamera != null) doorKeypadCamera.gameObject.SetActive(false);
+            if (activeCam != null) activeCam.gameObject.SetActive(true);
+
+            if (!IsDoorOpened)
+            {
+                SetPlayerControls(true);
+                Cursor.lockState = CursorLockMode.Locked;
+                Cursor.visible = false;
+
+                if (isPlayerLooking && promptContainer != null)
+                {
+                    promptContainer.SetActive(true);
+                }
+            }
+
+            Debug.Log("[DoorKeypad] Candado 3D cerrado. Cámara y control devueltos al jugador.");
+        }
     }
 
     // =========================================================================
@@ -444,7 +560,7 @@ public class DoorKeypadController : MonoBehaviour, IInteractable
 
     public void PressDigitButton(string digit)
     {
-        if (isProcessing || IsDoorOpened || !IsKeypadOpen) return;
+        if (isProcessing || IsDoorOpened || !IsKeypadOpen || isTransitioning) return;
 
         if (string.IsNullOrEmpty(digit)) return;
 
@@ -456,10 +572,9 @@ public class DoorKeypadController : MonoBehaviour, IInteractable
             if (audioSource != null && buttonClickSound != null)
                 audioSource.PlayOneShot(buttonClickSound);
 
-            // Actualizar inmediatamente el cuadro de texto del candado en tiempo real
             UpdateDisplay();
 
-            // Al digitar el 4to número, validar automáticamente si está bien o mal
+            // Al digitar el 4to número, validar automáticamente
             if (currentInput.Length >= maxDigits)
             {
                 ValidateCode();
@@ -474,7 +589,7 @@ public class DoorKeypadController : MonoBehaviour, IInteractable
 
     public void PressClearButton()
     {
-        if (isProcessing || IsDoorOpened || !IsKeypadOpen) return;
+        if (isProcessing || IsDoorOpened || !IsKeypadOpen || isTransitioning) return;
 
         if (currentInput.Length > 0)
         {
@@ -489,7 +604,7 @@ public class DoorKeypadController : MonoBehaviour, IInteractable
 
     public void PressClearAllButton()
     {
-        if (isProcessing || IsDoorOpened || !IsKeypadOpen) return;
+        if (isProcessing || IsDoorOpened || !IsKeypadOpen || isTransitioning) return;
 
         currentInput = "";
         if (audioSource != null && buttonClickSound != null)
@@ -500,7 +615,7 @@ public class DoorKeypadController : MonoBehaviour, IInteractable
 
     public void PressSubmitButton()
     {
-        if (isProcessing || IsDoorOpened || !IsKeypadOpen) return;
+        if (isProcessing || IsDoorOpened || !IsKeypadOpen || isTransitioning) return;
 
         if (string.IsNullOrEmpty(currentInput)) return;
 
@@ -537,6 +652,12 @@ public class DoorKeypadController : MonoBehaviour, IInteractable
     {
         Debug.Log("[DoorKeypad] ¡CÓDIGO CORRECTO! Abriendo puerta final.");
 
+        // Detener cronómetro inmediatamente al desbloquear la puerta con éxito
+        if (GameManager.Instance != null)
+        {
+            GameManager.Instance.StopTimer();
+        }
+
         SetDisplayColor(successColor);
         UpdateDisplay();
 
@@ -553,7 +674,7 @@ public class DoorKeypadController : MonoBehaviour, IInteractable
     {
         yield return new WaitForSeconds(0.6f);
 
-        // Cerrar vista del candado y restaurar cámara
+        // Cerrar vista del candado y retornar cámara suavemente al jugador
         PressCloseButton();
 
         // Abrir la puerta física y desencadenar la victoria
@@ -565,7 +686,7 @@ public class DoorKeypadController : MonoBehaviour, IInteractable
         Debug.LogWarning("[DoorKeypad] Código incorrecto ingresado.");
 
         SetDisplayColor(errorColor);
-        UpdateDisplay(); // Muestra los 4 números ingresados en rojo para feedback visual inmediato
+        UpdateDisplay();
 
         if (audioSource != null && errorSound != null)
             audioSource.PlayOneShot(errorSound);
@@ -573,7 +694,6 @@ public class DoorKeypadController : MonoBehaviour, IInteractable
         if (ScreenFlash.Instance != null)
             ScreenFlash.Instance.FlashError();
 
-        // Limpiar automáticamente tras 0.8s para permitir intentar de nuevo sin botón de borrar
         StartCoroutine(ResetInputAfterDelay(0.8f));
     }
 
@@ -591,6 +711,12 @@ public class DoorKeypadController : MonoBehaviour, IInteractable
     {
         IsDoorOpened = true;
         GameManager.UnregisterActivePuzzle(this);
+
+        // Detener cronómetro por seguridad
+        if (GameManager.Instance != null)
+        {
+            GameManager.Instance.StopTimer();
+        }
 
         // Desactivar collider físico de la puerta
         if (doorCollider != null)
@@ -631,41 +757,95 @@ public class DoorKeypadController : MonoBehaviour, IInteractable
     }
 
     // =========================================================================
-    // 4. PANTALLA DE VICTORIA Y TIEMPO DE ESCAPE
+    // 4. PANTALLA DE VICTORIA Y TIEMPO DE ESCAPE (RÉCORD HISTÓRICO)
     // =========================================================================
 
     private IEnumerator VictorySequenceRoutine()
     {
         yield return new WaitForSeconds(1.0f);
 
+        // Detener cronómetro inmediatamente si aún estuviese corriendo
+        if (GameManager.Instance != null)
+        {
+            GameManager.Instance.StopTimer();
+        }
+
+        // Si se cuenta con un VictoryPanelController dedicado en la escena, delegar la lógica
+        if (victoryPanelController != null)
+        {
+            victoryPanelController.ShowVictoryPanel();
+            SetPlayerControls(false);
+            yield break;
+        }
+
         // 1. Activar panel de victoria
         if (victoryPanel != null)
             victoryPanel.SetActive(true);
 
-        // 2. Calcular y formatear tiempo de escape (mm:ss)
-        float totalSeconds = Time.timeSinceLevelLoad;
-        int minutes = Mathf.FloorToInt(totalSeconds / 60f);
-        int seconds = Mathf.FloorToInt(totalSeconds % 60f);
-        string formattedTime = string.Format("{0:00}:{1:00}", minutes, seconds);
+        // 2. Obtener y formatear tiempos desde GameManager
+        string curTime = GameManager.Instance != null
+            ? GameManager.Instance.GetCurrentFormattedTime()
+            : GameManager.FormatTime(Time.timeSinceLevelLoad);
 
-        if (victoryTimeText != null)
+        string bestTime = GameManager.Instance != null
+            ? GameManager.Instance.GetBestFormattedTime()
+            : curTime;
+
+        bool isNewRecord = GameManager.Instance != null && GameManager.Instance.HasNewRecordAchieved();
+
+        // 3. Proyectar tiempo actual
+        if (currentTimeText != null)
         {
-            victoryTimeText.text = $"{victoryTimePrefix}{formattedTime}";
+            currentTimeText.text = curTime; // Solo el número: las etiquetas ya existen en el Canvas
+        }
+        else
+        {
+            Debug.LogWarning("[DoorKeypadController] 'currentTimeText' no asignado en el Inspector.");
         }
 
-        // 3. Notificar estado Victory a GameManager
+        // 4. Proyectar mejor tiempo histórico
+        if (bestTimeText != null)
+        {
+            bestTimeText.text = bestTime; // Solo el número: las etiquetas ya existen en el Canvas
+        }
+
+        // 5. Activar o desactivar badge de nuevo récord
+        if (newRecordBadge != null)
+        {
+            newRecordBadge.SetActive(isNewRecord);
+        }
+
+        // 6. Notificar estado Victory a GameManager
         if (GameManager.Instance != null)
         {
             GameManager.Instance.ChangeState(GameState.Victory);
         }
 
-        // 4. Liberar cursor y mantener jugador bloqueado
+        // 7. Liberar cursor y mantener jugador bloqueado
         Cursor.lockState = CursorLockMode.None;
         Cursor.visible = true;
 
         SetPlayerControls(false);
 
-        Debug.Log($"[DoorKeypad] ¡ESCAPE COMPLETADO! Tiempo final: {formattedTime}");
+        Debug.Log($"[DoorKeypad] ¡ESCAPE COMPLETADO! Tiempo actual: {curTime} | Mejor tiempo: {bestTime} | ¿Nuevo récord?: {isNewRecord}");
+    }
+
+    /// <summary>
+    /// Menú contextual para resetear el récord guardado en PlayerPrefs durante pruebas.
+    /// </summary>
+    [ContextMenu("Reset Best Time (PlayerPrefs)")]
+    public void ResetBestTime()
+    {
+        if (GameManager.Instance != null)
+        {
+            GameManager.Instance.ResetBestTime();
+        }
+        else
+        {
+            PlayerPrefs.DeleteKey("BestEscapeTime");
+            PlayerPrefs.Save();
+            Debug.Log("[DoorKeypadController] PlayerPrefs 'BestEscapeTime' eliminado.");
+        }
     }
 
     // Métodos públicos para botones del Panel de Victoria
@@ -715,6 +895,29 @@ public class DoorKeypadController : MonoBehaviour, IInteractable
     // AUXILIARES DE DISPLAY Y CONTROL DE JUGADOR
     // =========================================================================
 
+    private void ResolvePlayerCamera()
+    {
+        if (mainPlayerCamera == null)
+        {
+            mainPlayerCamera = Camera.main;
+            if (mainPlayerCamera == null)
+            {
+                MouseLook mouseLook = FindFirstObjectByType<MouseLook>();
+                if (mouseLook != null)
+                {
+                    mainPlayerCamera = mouseLook.GetComponent<Camera>();
+                }
+            }
+        }
+    }
+
+    private Camera GetActivePlayerCamera()
+    {
+        if (mainPlayerCamera != null) return mainPlayerCamera;
+        ResolvePlayerCamera();
+        return mainPlayerCamera != null ? mainPlayerCamera : Camera.main;
+    }
+
     private void SetPlayerControls(bool state)
     {
         if (playerMovementScript != null)
@@ -750,7 +953,6 @@ public class DoorKeypadController : MonoBehaviour, IInteractable
             return;
         }
 
-        // Mostrar los números que se van digitando en tiempo real con espacios y guiones para los pendientes
         System.Text.StringBuilder sb = new System.Text.StringBuilder();
         for (int i = 0; i < maxDigits; i++)
         {
@@ -777,7 +979,7 @@ public class DoorKeypadController : MonoBehaviour, IInteractable
 
     public void OnHandEnter()
     {
-        if (IsDoorOpened || IsKeypadOpen) return;
+        if (IsDoorOpened || IsKeypadOpen || isTransitioning) return;
         if (GameManager.IsAnyPuzzleActive && !GameManager.IsThisPuzzleActive(this)) return;
 
         isPlayerLooking = true;
@@ -800,4 +1002,3 @@ public class DoorKeypadController : MonoBehaviour, IInteractable
             promptContainer.SetActive(false);
     }
 }
-

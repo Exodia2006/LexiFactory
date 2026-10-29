@@ -389,4 +389,14 @@ public class TVPuzzleController : MonoBehaviour
 
         if (tvCanvas != null) tvCanvas.SetActive(false);
     }
+
+    private void OnDisable()
+    {
+        StopPuzzle();
+    }
+
+    private void OnDestroy()
+    {
+        StopPuzzle();
+    }
 }

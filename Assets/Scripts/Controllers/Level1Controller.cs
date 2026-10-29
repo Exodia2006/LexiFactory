@@ -1,34 +1,35 @@
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 public class Level1Controller : MonoBehaviour
 {
     public void GoToMainMenu()
     {
+        Time.timeScale = 1f;
         if (GameManager.Instance != null)
         {
             GameManager.Instance.GoToMainMenu();
         }
         else
         {
-            Time.timeScale = 1f;
             Cursor.lockState = CursorLockMode.None;
             Cursor.visible = true;
-            UnityEngine.SceneManagement.SceneManager.LoadScene("MainMenu");
+            SceneManager.LoadScene("MainMenu");
         }
     }
 
     public void RestartLevel()
     {
+        Time.timeScale = 1f;
         if (GameManager.Instance != null)
         {
             GameManager.Instance.RestartLevel();
         }
         else
         {
-            Time.timeScale = 1f;
-            Cursor.lockState = CursorLockMode.None;
-            Cursor.visible = true;
-            UnityEngine.SceneManagement.SceneManager.LoadScene(UnityEngine.SceneManagement.SceneManager.GetActiveScene().name);
+            Cursor.lockState = CursorLockMode.Locked;
+            Cursor.visible = false;
+            SceneManager.LoadScene(SceneManager.GetActiveScene().name);
         }
     }
 }

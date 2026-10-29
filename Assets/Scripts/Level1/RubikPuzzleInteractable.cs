@@ -2,6 +2,11 @@ using UnityEngine;
 using TMPro;
 using UnityEngine.UI;
 
+/// <summary>
+/// Lead Gameplay Architecture:
+/// Controlador de interacción para el Puzzle del Cubo Rubik.
+/// Integra transiciones suaves de cámara mediante CameraTransitionManager al entrar y salir del puzzle.
+/// </summary>
 public class RubikPuzzleInteractable : MonoBehaviour, IInteractable
 {
     [Header("Cartel de Interacción (Prompt UI)")]
@@ -27,6 +32,13 @@ public class RubikPuzzleInteractable : MonoBehaviour, IInteractable
     [SerializeField] private Camera mainPlayerCamera;
     [SerializeField] private Camera rubikCamera;
 
+    [Header("Transición Suave de Cámara")]
+    [Tooltip("Duración de la transición entre la cámara del jugador y la del puzzle de Rubik")]
+    [Range(0.1f, 2f)]
+    [SerializeField] private float cameraTransitionDuration = 0.6f;
+    [Tooltip("Habilitar interpolación suave mediante CameraTransitionManager")]
+    [SerializeField] private bool useSmoothCameraTransition = true;
+
     [Header("Scripts del Jugador a Desactivar")]
     [SerializeField] private MonoBehaviour playerMovementScript;
     [SerializeField] private MonoBehaviour mouseLookScript;
@@ -35,10 +47,12 @@ public class RubikPuzzleInteractable : MonoBehaviour, IInteractable
     [SerializeField] private RubikPuzzleController puzzleController;
 
     public bool IsSolved { get; private set; } = false;
+    public bool IsTransitioning => isTransitioning;
 
     private bool isInstructionOpen = false;
     private bool isInPuzzleView = false;
     private bool isPlayerLooking = false;
+    private bool isTransitioning = false;
 
     private void Awake()
     {
@@ -51,16 +65,20 @@ public class RubikPuzzleInteractable : MonoBehaviour, IInteractable
         if (keyIconImage != null && keyIconSprite != null)
             keyIconImage.sprite = keyIconSprite;
 
-        if (mainPlayerCamera == null)
-            mainPlayerCamera = Camera.main;
+        ResolvePlayerCamera();
     }
 
     private void Start()
     {
-        if (rubikCamera != null) rubikCamera.gameObject.SetActive(false);
-        if (instructionCanvas != null) instructionCanvas.SetActive(false);
+        EnsureCleanState();
 
-        HidePrompt();
+        if (playerMovementScript == null)
+            playerMovementScript = FindFirstObjectByType<PlayerMovement>();
+
+        if (mouseLookScript == null)
+            mouseLookScript = FindFirstObjectByType<MouseLook>();
+
+        SetPlayerControls(true);
 
         if (actionDescriptionText != null)
             actionDescriptionText.text = !string.IsNullOrEmpty(actionDescription) ? actionDescription : hoverMessage;
@@ -68,20 +86,66 @@ public class RubikPuzzleInteractable : MonoBehaviour, IInteractable
             promptText.text = hoverMessage;
     }
 
+    private void OnDisable()
+    {
+        CleanupOnExit();
+    }
+
+    private void OnDestroy()
+    {
+        CleanupOnExit();
+    }
+
+    private void CleanupOnExit()
+    {
+        GameManager.UnregisterActivePuzzle(this);
+        StopAllCoroutines();
+        isTransitioning = false;
+        isInPuzzleView = false;
+        isInstructionOpen = false;
+
+        if (rubikCamera != null)
+            rubikCamera.gameObject.SetActive(false);
+
+        if (instructionCanvas != null)
+            instructionCanvas.SetActive(false);
+
+        if (puzzleController != null)
+            puzzleController.DeactivatePuzzle();
+    }
+
+    public void EnsureCleanState()
+    {
+        isTransitioning = false;
+        isInPuzzleView = false;
+        isInstructionOpen = false;
+        isPlayerLooking = false;
+
+        if (rubikCamera != null)
+            rubikCamera.gameObject.SetActive(false);
+
+        if (instructionCanvas != null)
+            instructionCanvas.SetActive(false);
+
+        if (puzzleController != null)
+            puzzleController.DeactivatePuzzle();
+
+        HidePrompt();
+    }
+
     private void Update()
     {
-        if (IsSolved) return;
+        if (IsSolved || isTransitioning) return;
 
         // 1. Orientar cartel flotante hacia la cámara
         if (isPlayerLooking && !isInstructionOpen && !isInPuzzleView)
         {
-            if (mainPlayerCamera == null) mainPlayerCamera = Camera.main;
-
+            Camera activeCam = GetActivePlayerCamera();
             GameObject target = promptContainer != null ? promptContainer : promptCanvas;
-            if (target != null && mainPlayerCamera != null)
+            if (target != null && activeCam != null)
             {
                 target.transform.rotation = Quaternion.LookRotation(
-                    target.transform.position - mainPlayerCamera.transform.position
+                    target.transform.position - activeCam.transform.position
                 );
             }
         }
@@ -97,6 +161,7 @@ public class RubikPuzzleInteractable : MonoBehaviour, IInteractable
 
             if (Input.GetKeyDown(KeyCode.Escape))
             {
+                GameManager.ConsumeEscape();
                 CloseInstructions();
                 return;
             }
@@ -112,6 +177,7 @@ public class RubikPuzzleInteractable : MonoBehaviour, IInteractable
 
             if (Input.GetKeyDown(KeyCode.Escape))
             {
+                GameManager.ConsumeEscape();
                 ExitPuzzle();
             }
         }
@@ -119,7 +185,7 @@ public class RubikPuzzleInteractable : MonoBehaviour, IInteractable
 
     private void DetectBlockClick()
     {
-        if (rubikCamera == null) return;
+        if (rubikCamera == null || isTransitioning) return;
 
         Ray ray = rubikCamera.ScreenPointToRay(Input.mousePosition);
         RaycastHit[] hits = Physics.RaycastAll(ray, 20f);
@@ -139,7 +205,7 @@ public class RubikPuzzleInteractable : MonoBehaviour, IInteractable
 
     public void OnHandEnter()
     {
-        if (IsSolved || isInstructionOpen || isInPuzzleView) return;
+        if (IsSolved || isInstructionOpen || isInPuzzleView || isTransitioning) return;
         if (GameManager.IsAnyPuzzleActive && !GameManager.IsThisPuzzleActive(this)) return;
 
         isPlayerLooking = true;
@@ -154,7 +220,7 @@ public class RubikPuzzleInteractable : MonoBehaviour, IInteractable
 
     public void Interact()
     {
-        if (IsSolved) return;
+        if (IsSolved || isTransitioning) return;
         if (GameManager.IsAnyPuzzleActive && !GameManager.IsThisPuzzleActive(this))
         {
             Debug.LogWarning("[RubikPuzzleInteractable] Ya hay otro puzzle en progreso.");
@@ -169,7 +235,7 @@ public class RubikPuzzleInteractable : MonoBehaviour, IInteractable
 
     public void ShowPrompt()
     {
-        if (IsSolved || isInstructionOpen || isInPuzzleView) return;
+        if (IsSolved || isInstructionOpen || isInPuzzleView || isTransitioning) return;
         if (GameManager.IsAnyPuzzleActive && !GameManager.IsThisPuzzleActive(this)) return;
 
         if (promptContainer != null)
@@ -229,7 +295,7 @@ public class RubikPuzzleInteractable : MonoBehaviour, IInteractable
 
     public void OpenInstructions()
     {
-        if (IsSolved) return;
+        if (IsSolved || isTransitioning) return;
         if (GameManager.IsAnyPuzzleActive && !GameManager.IsThisPuzzleActive(this)) return;
 
         GameManager.RegisterActivePuzzle(this);
@@ -248,7 +314,7 @@ public class RubikPuzzleInteractable : MonoBehaviour, IInteractable
 
     public void OnStartButtonPressed()
     {
-        if (IsSolved) return;
+        if (IsSolved || isTransitioning) return;
 
         isInstructionOpen = false;
 
@@ -260,6 +326,8 @@ public class RubikPuzzleInteractable : MonoBehaviour, IInteractable
 
     public void CloseInstructions()
     {
+        if (isTransitioning) return;
+
         isInstructionOpen = false;
         GameManager.UnregisterActivePuzzle(this);
 
@@ -273,41 +341,113 @@ public class RubikPuzzleInteractable : MonoBehaviour, IInteractable
         }
     }
 
-    public void EnterPuzzleView()
+    public void EnterPuzzleView(System.Action onComplete = null)
     {
+        if (isTransitioning) return;
+
         GameManager.RegisterActivePuzzle(this);
-        isInPuzzleView = true;
-
-        if (mainPlayerCamera != null) mainPlayerCamera.gameObject.SetActive(false);
-        if (rubikCamera != null) rubikCamera.gameObject.SetActive(true);
-
         SetPlayerControls(false);
 
-        Cursor.lockState = CursorLockMode.None;
-        Cursor.visible = true;
+        Camera activeCam = GetActivePlayerCamera();
 
-        if (puzzleController != null)
-            puzzleController.ActivatePuzzle();
+        if (useSmoothCameraTransition && rubikCamera != null && activeCam != null)
+        {
+            isTransitioning = true;
+            CameraTransitionManager.Instance.Transition(activeCam, rubikCamera, cameraTransitionDuration, () =>
+            {
+                isTransitioning = false;
+                isInPuzzleView = true;
+
+                Cursor.lockState = CursorLockMode.None;
+                Cursor.visible = true;
+
+                if (puzzleController != null)
+                    puzzleController.ActivatePuzzle();
+
+                onComplete?.Invoke();
+            });
+        }
+        else
+        {
+            isInPuzzleView = true;
+            if (activeCam != null) activeCam.gameObject.SetActive(false);
+            if (rubikCamera != null) rubikCamera.gameObject.SetActive(true);
+
+            Cursor.lockState = CursorLockMode.None;
+            Cursor.visible = true;
+
+            if (puzzleController != null)
+                puzzleController.ActivatePuzzle();
+
+            onComplete?.Invoke();
+        }
     }
 
-    public void ExitPuzzle()
+    public void ExitPuzzle(System.Action onComplete = null)
     {
+        if (isTransitioning) return;
+
         isInPuzzleView = false;
         GameManager.UnregisterActivePuzzle(this);
 
-        if (rubikCamera != null) rubikCamera.gameObject.SetActive(false);
-        if (mainPlayerCamera != null) mainPlayerCamera.gameObject.SetActive(true);
+        if (puzzleController != null)
+            puzzleController.DeactivatePuzzle();
 
-        SetPlayerControls(true);
+        Camera activeCam = GetActivePlayerCamera();
 
-        if (puzzleController != null) puzzleController.DeactivatePuzzle();
-
-        RestorePlayerState();
-
-        if (isPlayerLooking && !IsSolved)
+        if (useSmoothCameraTransition && rubikCamera != null && activeCam != null)
         {
-            ShowPrompt();
+            isTransitioning = true;
+            CameraTransitionManager.Instance.Transition(rubikCamera, activeCam, cameraTransitionDuration, () =>
+            {
+                isTransitioning = false;
+                RestorePlayerState();
+
+                if (isPlayerLooking && !IsSolved)
+                {
+                    ShowPrompt();
+                }
+
+                onComplete?.Invoke();
+            });
         }
+        else
+        {
+            if (rubikCamera != null) rubikCamera.gameObject.SetActive(false);
+            if (activeCam != null) activeCam.gameObject.SetActive(true);
+
+            RestorePlayerState();
+
+            if (isPlayerLooking && !IsSolved)
+            {
+                ShowPrompt();
+            }
+
+            onComplete?.Invoke();
+        }
+    }
+
+    private void ResolvePlayerCamera()
+    {
+        if (mainPlayerCamera == null)
+        {
+            mainPlayerCamera = Camera.main;
+            if (mainPlayerCamera == null)
+            {
+                MouseLook mouseLook = FindFirstObjectByType<MouseLook>();
+                if (mouseLook != null)
+                {
+                    mainPlayerCamera = mouseLook.GetComponent<Camera>();
+                }
+            }
+        }
+    }
+
+    private Camera GetActivePlayerCamera()
+    {
+        if (mainPlayerCamera != null) return mainPlayerCamera;
+        ResolvePlayerCamera();
+        return mainPlayerCamera != null ? mainPlayerCamera : Camera.main;
     }
 
     private void RestorePlayerState()

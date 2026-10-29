@@ -99,6 +99,16 @@ public class DeskPuzzleController : MonoBehaviour
         if (deskCanvas != null) deskCanvas.SetActive(false);
     }
 
+    private void OnDisable()
+    {
+        StopPuzzle();
+    }
+
+    private void OnDestroy()
+    {
+        StopPuzzle();
+    }
+
     private void ResetPuzzleState()
     {
         ResetErrorCrosses();

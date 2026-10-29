@@ -53,6 +53,8 @@ public class ToyBoxDropZone : MonoBehaviour
     [SerializeField] private GameObject codeDisplayObject;
     [SerializeField] private TextMeshPro codeText3D;
     [SerializeField] private TextMeshProUGUI codeTextUI;
+    [Tooltip("Separador entre dígitos del código mostrado (ej: ' ' → '7 ? 9 2', '' → '7?92')")]
+    [SerializeField] private string codeSeparator = " ";
 
     [Header("Audio")]
     [SerializeField] private AudioSource audioSource;
@@ -109,7 +111,12 @@ public class ToyBoxDropZone : MonoBehaviour
     private void Start()
     {
         // 4. Gestión de los 6 objetos: asegurarse de que comiencen completamente DESACTIVADOS en la escena
+        IsPuzzleActive = false;
+        currentClueIndex = 0;
         SetAllToysActive(false);
+        if (crosshairUI != null) crosshairUI.SetActive(false);
+        if (interactionSystem != null) interactionSystem.StopInteraction();
+        RefreshCodeDisplay();
     }
 
     private void OnValidate()
@@ -174,8 +181,9 @@ public class ToyBoxDropZone : MonoBehaviour
             audioSource.Stop();
         }
 
+        // Apagar por completo el sistema de interacción: oculta la mira, suelta el juguete y detiene el raycast
+        if (interactionSystem != null) interactionSystem.StopInteraction();
         if (crosshairUI != null) crosshairUI.SetActive(false);
-        if (interactionSystem != null) interactionSystem.SetCrosshairActive(false);
 
         // Si el jugador tenía algún juguete agarrado, soltarlo
         if (interactionSystem != null && interactionSystem.IsHoldingToy)
@@ -185,6 +193,35 @@ public class ToyBoxDropZone : MonoBehaviour
 
         // Si el reto se cancela o no está activo, mantenerlos ocultos para no saturar la habitación
         SetAllToysActive(false);
+    }
+
+    private void OnEnable()
+    {
+        // Mantener el cajón sincronizado cuando OTROS puzzles revelan sus dígitos después
+        GameManager.OnCodeChanged += RefreshCodeDisplay;
+    }
+
+    private void OnDisable()
+    {
+        GameManager.OnCodeChanged -= RefreshCodeDisplay;
+        StopPuzzle();
+    }
+
+    /// <summary>
+    /// Muestra en el cajón el progreso completo del código (ej: "7 ? 9 2").
+    /// </summary>
+    private void RefreshCodeDisplay()
+    {
+        if (GameManager.Instance == null) return;
+
+        string progress = GameManager.Instance.GetDiscoveredCodeString(codeSeparator ?? string.Empty);
+        if (codeText3D != null) codeText3D.text = progress;
+        if (codeTextUI != null) codeTextUI.text = progress;
+    }
+
+    private void OnDestroy()
+    {
+        StopPuzzle();
     }
 
     public void SetAllToysActive(bool active)
@@ -453,17 +490,16 @@ public class ToyBoxDropZone : MonoBehaviour
 
         // 2. Ocultar la retícula central (Crosshair UI)
         if (crosshairUI != null) crosshairUI.SetActive(false);
-        if (interactionSystem != null) interactionSystem.SetCrosshairActive(false);
+        if (interactionSystem != null) interactionSystem.StopInteraction();
 
         // 3. Revelar el dígito correspondiente en GameManager
         if (GameManager.Instance != null)
         {
             GameManager.Instance.RevealDigit(codeDigitIndex);
-
-            char revealedDigit = GameManager.Instance.GetSecretDigitChar(codeDigitIndex);
-            if (codeText3D != null) codeText3D.text = revealedDigit.ToString();
-            if (codeTextUI != null) codeTextUI.text = revealedDigit.ToString();
         }
+
+        // Mostrar el progreso COMPLETO del código (ej: "7 ? 9 2"), no solo el dígito de este puzzle
+        RefreshCodeDisplay();
 
         if (codeDisplayObject != null)
             codeDisplayObject.SetActive(true);

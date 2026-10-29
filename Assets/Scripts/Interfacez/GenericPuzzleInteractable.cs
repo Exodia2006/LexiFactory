@@ -1,8 +1,16 @@
+using System;
 using System.Collections;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
+/// <summary>
+/// Lead Gameplay Architecture:
+/// Controlador base para objetos interactuables de tipo puzzle.
+/// Integra transiciones suaves de cámara (Player Camera <-> Puzzle Camera),
+/// limpieza rigurosa de estado en descarga de escena (OnDestroy/OnDisable),
+/// e inicialización blindada al cargar o reiniciar el nivel.
+/// </summary>
 public class GenericPuzzleInteractable : MonoBehaviour, IInteractable
 {
     [Header("Cartel de Interacción (Prompt UI)")]
@@ -32,18 +40,30 @@ public class GenericPuzzleInteractable : MonoBehaviour, IInteractable
     [SerializeField] private int codeDigitIndex = 0; // Configurar en Inspector: 0, 1, 2 o 3
 
     [Header("Cámaras (Opcional)")]
+    [Tooltip("Cámara en primera persona del jugador")]
     [SerializeField] private Camera mainPlayerCamera;
+    [Tooltip("Cámara dedicada que enfoca el puzzle (TV, Escritorio, etc.)")]
     [SerializeField] private Camera puzzleCamera;
+
+    [Header("Transición Suave de Cámara")]
+    [Tooltip("Duración de la transición entre la cámara del jugador y la del puzzle")]
+    [Range(0.1f, 2f)]
+    [SerializeField] private float cameraTransitionDuration = 0.6f;
+    [Tooltip("Habilitar interpolación suave mediante CameraTransitionManager")]
+    [SerializeField] private bool useSmoothCameraTransition = true;
 
     [Header("Scripts del Jugador a Desactivar")]
     [SerializeField] private MonoBehaviour playerMovementScript;
     [SerializeField] private MonoBehaviour mouseLookScript;
 
     public bool IsSolved { get; private set; } = false;
+    public bool IsTransitioning => isTransitioning;
 
     private bool isInstructionOpen = false;
     private bool isInPuzzleView = false;
+    private bool isInFirstPersonPuzzle = false; // Puzzle sin cámara propia (ej: Caja de Juguetes) en curso
     private bool isPlayerLooking = false;
+    private bool isTransitioning = false;
     private bool canProcessInput = true; // Control para ignorar la 'E' del mismo frame
 
     private void Awake()
@@ -58,16 +78,23 @@ public class GenericPuzzleInteractable : MonoBehaviour, IInteractable
         if (keyIconImage != null && keyIconSprite != null)
             keyIconImage.sprite = keyIconSprite;
 
-        if (mainPlayerCamera == null)
-            mainPlayerCamera = Camera.main;
+        ResolvePlayerCamera();
     }
 
     private void Start()
     {
-        if (puzzleCamera != null) puzzleCamera.gameObject.SetActive(false);
-        if (instructionCanvas != null) instructionCanvas.SetActive(false);
+        // Auto-detectar scripts de movimiento del jugador si están sin asignar en Inspector
+        if (playerMovementScript == null)
+            playerMovementScript = FindFirstObjectByType<PlayerMovement>();
 
-        HidePrompt();
+        if (mouseLookScript == null)
+            mouseLookScript = FindFirstObjectByType<MouseLook>();
+
+        // Forzar inicialización limpia y blindada en Start de la escena
+        EnsureCleanState();
+
+        // Asegurar que los controles del jugador comiencen activos al iniciar la escena
+        SetPlayerControls(true);
 
         if (actionDescriptionText != null)
             actionDescriptionText.text = !string.IsNullOrEmpty(actionDescription) ? actionDescription : hoverMessage;
@@ -75,20 +102,77 @@ public class GenericPuzzleInteractable : MonoBehaviour, IInteractable
             promptText.text = hoverMessage;
     }
 
+    private void OnDisable()
+    {
+        CleanupOnExit();
+    }
+
+    private void OnDestroy()
+    {
+        CleanupOnExit();
+    }
+
+    /// <summary>
+    /// Limpieza completa al descargar la escena o deshabilitar el objeto:
+    /// Libera registros estáticos en GameManager, detiene corrutinas y apaga cámaras secundarias.
+    /// </summary>
+    private void CleanupOnExit()
+    {
+        GameManager.UnregisterActivePuzzle(this);
+        StopAllCoroutines();
+
+        isTransitioning = false;
+        isInPuzzleView = false;
+        isInFirstPersonPuzzle = false;
+        isInstructionOpen = false;
+
+        if (puzzleCamera != null)
+            puzzleCamera.gameObject.SetActive(false);
+
+        if (instructionCanvas != null)
+            instructionCanvas.SetActive(false);
+    }
+
+    /// <summary>
+    /// Restablece el puzzle a un estado base listo para interacción al entrar o reiniciar el nivel.
+    /// </summary>
+    public void EnsureCleanState()
+    {
+        isTransitioning = false;
+        isInPuzzleView = false;
+        isInFirstPersonPuzzle = false;
+        isInstructionOpen = false;
+        canProcessInput = true;
+        isPlayerLooking = false;
+
+        if (puzzleCamera != null)
+            puzzleCamera.gameObject.SetActive(false);
+
+        if (instructionCanvas != null)
+            instructionCanvas.SetActive(false);
+
+        if (!IsSolved)
+        {
+            if (interactionCollider != null)
+                interactionCollider.enabled = true;
+        }
+
+        HidePrompt();
+    }
+
     private void Update()
     {
-        if (IsSolved) return;
+        if (IsSolved || isTransitioning) return;
 
         // 1. Orientar cartel flotante hacia la cámara
         if (isPlayerLooking && !isInstructionOpen && !isInPuzzleView)
         {
-            if (mainPlayerCamera == null) mainPlayerCamera = Camera.main;
-
+            Camera activeCam = GetActivePlayerCamera();
             GameObject targetToRotate = promptContainer != null ? promptContainer : promptCanvas;
-            if (targetToRotate != null && mainPlayerCamera != null)
+            if (targetToRotate != null && activeCam != null)
             {
                 targetToRotate.transform.rotation = Quaternion.LookRotation(
-                    targetToRotate.transform.position - mainPlayerCamera.transform.position
+                    targetToRotate.transform.position - activeCam.transform.position
                 );
             }
         }
@@ -106,16 +190,18 @@ public class GenericPuzzleInteractable : MonoBehaviour, IInteractable
 
             if (Input.GetKeyDown(KeyCode.Escape))
             {
+                GameManager.ConsumeEscape();
                 CloseInstructions();
                 return;
             }
         }
 
-        // 3. Control mientras está metido en la cámara del reto (TV, Escritorio, etc.)
-        if (isInPuzzleView)
+        // 3. Control mientras está en la cámara del reto (TV, Escritorio, etc.)
+        if (isInPuzzleView || isInFirstPersonPuzzle)
         {
             if (Input.GetKeyDown(KeyCode.Escape))
             {
+                GameManager.ConsumeEscape();
                 ExitPuzzle();
                 return;
             }
@@ -127,7 +213,7 @@ public class GenericPuzzleInteractable : MonoBehaviour, IInteractable
 
     public void OnHandEnter()
     {
-        if (IsSolved || isInstructionOpen || isInPuzzleView) return;
+        if (IsSolved || isInstructionOpen || isInPuzzleView || isInFirstPersonPuzzle || isTransitioning) return;
         if (GameManager.IsAnyPuzzleActive && !GameManager.IsThisPuzzleActive(this)) return;
 
         isPlayerLooking = true;
@@ -142,14 +228,14 @@ public class GenericPuzzleInteractable : MonoBehaviour, IInteractable
 
     public void Interact()
     {
-        if (IsSolved) return;
+        if (IsSolved || isTransitioning) return;
         if (GameManager.IsAnyPuzzleActive && !GameManager.IsThisPuzzleActive(this))
         {
             Debug.LogWarning("[GenericPuzzleInteractable] Ya hay otro puzzle en progreso. Termina o sal del actual primero.");
             return;
         }
 
-        if (!isInstructionOpen && !isInPuzzleView)
+        if (!isInstructionOpen && !isInPuzzleView && !isInFirstPersonPuzzle)
         {
             OpenInstructions();
         }
@@ -158,7 +244,7 @@ public class GenericPuzzleInteractable : MonoBehaviour, IInteractable
     // --- GESTIÓN DE PROMPTS Y BLOQUEO ---
     public void ShowPrompt()
     {
-        if (IsSolved || isInstructionOpen || isInPuzzleView) return;
+        if (IsSolved || isInstructionOpen || isInPuzzleView || isInFirstPersonPuzzle || isTransitioning) return;
         if (GameManager.IsAnyPuzzleActive && !GameManager.IsThisPuzzleActive(this)) return;
 
         if (promptContainer != null)
@@ -188,6 +274,7 @@ public class GenericPuzzleInteractable : MonoBehaviour, IInteractable
 
         IsSolved = true;
         isPlayerLooking = false;
+        isInFirstPersonPuzzle = false;
         GameManager.UnregisterActivePuzzle(this);
 
         // 1. Forzar apagado inmediato del cartel de interacción
@@ -237,7 +324,7 @@ public class GenericPuzzleInteractable : MonoBehaviour, IInteractable
     // --- FLUJO DE INSTRUCCIONES Y CÁMARA ---
     public void OpenInstructions()
     {
-        if (IsSolved) return;
+        if (IsSolved || isTransitioning) return;
         if (GameManager.IsAnyPuzzleActive && !GameManager.IsThisPuzzleActive(this)) return;
 
         GameManager.RegisterActivePuzzle(this);
@@ -272,25 +359,137 @@ public class GenericPuzzleInteractable : MonoBehaviour, IInteractable
 
     public void OnStartButtonPressed()
     {
-        if (IsSolved) return;
+        if (IsSolved || isTransitioning) return;
 
         isInstructionOpen = false;
 
+        // Ocultar Canvas de instrucciones de inmediato
         if (instructionCanvas != null)
             instructionCanvas.SetActive(false);
 
-        // 1. Si el objeto tiene cámara propia de reto (como el TV o Escritorio), enfocamos
+        // 1. Si el puzzle cuenta con cámara dedicada (TV, Escritorio), interpolar suavemente hacia ella
         if (puzzleCamera != null)
         {
-            EnterPuzzleView();
+            EnterPuzzleView(() =>
+            {
+                // Al finalizar la transición, se activa la lógica y la UI del puzzle
+                StartAttachedPuzzle();
+            });
         }
         else
         {
-            // Puzzles que se juegan caminando en primera persona (ej: Caja de Juguetes)
+            // Puzzles jugados en primera persona (ej: Caja de Juguetes): sesión sin cámara propia.
+            // Se marca la sesión para que Escape pueda salir limpiamente del reto.
+            isInFirstPersonPuzzle = true;
             RestorePlayerState();
+            StartAttachedPuzzle();
         }
+    }
 
-        // 2. Iniciar la lógica del controlador correspondiente
+    public void CloseInstructions()
+    {
+        if (isTransitioning) return;
+
+        isInstructionOpen = false;
+
+        GameManager.UnregisterActivePuzzle(this);
+
+        if (instructionCanvas != null) instructionCanvas.SetActive(false);
+
+        RestorePlayerState();
+
+        if (isPlayerLooking && !IsSolved)
+        {
+            ShowPrompt();
+        }
+    }
+
+    /// <summary>
+    /// Transiciona suavemente desde la cámara del jugador hacia la cámara del puzzle.
+    /// Desactiva controles e inputs mientras la transición está en curso.
+    /// </summary>
+    public void EnterPuzzleView(Action onComplete = null)
+    {
+        if (isTransitioning) return;
+
+        GameManager.RegisterActivePuzzle(this);
+        SetPlayerControls(false);
+
+        Camera activeCam = GetActivePlayerCamera();
+
+        if (useSmoothCameraTransition && puzzleCamera != null && activeCam != null)
+        {
+            isTransitioning = true;
+            CameraTransitionManager.Instance.Transition(activeCam, puzzleCamera, cameraTransitionDuration, () =>
+            {
+                isTransitioning = false;
+                isInPuzzleView = true;
+                UnlockCursor();
+                onComplete?.Invoke();
+            });
+        }
+        else
+        {
+            isInPuzzleView = true;
+            if (activeCam != null) activeCam.gameObject.SetActive(false);
+            if (puzzleCamera != null) puzzleCamera.gameObject.SetActive(true);
+            UnlockCursor();
+            onComplete?.Invoke();
+        }
+    }
+
+    /// <summary>
+    /// Salida del puzzle: Oculta la UI del puzzle de inmediato y transiciona suavemente de regreso a la cámara del jugador.
+    /// Reactiva controles y bloquea el cursor al completar.
+    /// </summary>
+    public void ExitPuzzle(Action onComplete = null)
+    {
+        if (isTransitioning) return;
+
+        isInPuzzleView = false;
+        isInFirstPersonPuzzle = false;
+        GameManager.UnregisterActivePuzzle(this);
+
+        // 1. Ocultar la UI del puzzle y detener controladores inmediatamente
+        StopAttachedPuzzle();
+
+        Camera activeCam = GetActivePlayerCamera();
+
+        // 2. Si cuenta con cámara dedicada de puzzle, interpolar suavemente de regreso al jugador
+        if (useSmoothCameraTransition && puzzleCamera != null && activeCam != null)
+        {
+            isTransitioning = true;
+            CameraTransitionManager.Instance.Transition(puzzleCamera, activeCam, cameraTransitionDuration, () =>
+            {
+                isTransitioning = false;
+                RestorePlayerState();
+
+                if (isPlayerLooking && !IsSolved)
+                {
+                    ShowPrompt();
+                }
+
+                onComplete?.Invoke();
+            });
+        }
+        else
+        {
+            if (puzzleCamera != null) puzzleCamera.gameObject.SetActive(false);
+            if (activeCam != null) activeCam.gameObject.SetActive(true);
+
+            RestorePlayerState();
+
+            if (isPlayerLooking && !IsSolved)
+            {
+                ShowPrompt();
+            }
+
+            onComplete?.Invoke();
+        }
+    }
+
+    private void StartAttachedPuzzle()
+    {
         TVPuzzleController tvPuzzle = GetComponent<TVPuzzleController>();
         if (tvPuzzle != null)
         {
@@ -313,43 +512,8 @@ public class GenericPuzzleInteractable : MonoBehaviour, IInteractable
         }
     }
 
-    public void CloseInstructions()
+    private void StopAttachedPuzzle()
     {
-        isInstructionOpen = false;
-
-        GameManager.UnregisterActivePuzzle(this);
-
-        if (instructionCanvas != null) instructionCanvas.SetActive(false);
-
-        RestorePlayerState();
-
-        if (isPlayerLooking && !IsSolved)
-        {
-            ShowPrompt();
-        }
-    }
-
-    public void EnterPuzzleView()
-    {
-        GameManager.RegisterActivePuzzle(this);
-        isInPuzzleView = true;
-
-        if (mainPlayerCamera != null) mainPlayerCamera.gameObject.SetActive(false);
-        if (puzzleCamera != null) puzzleCamera.gameObject.SetActive(true);
-
-        SetPlayerControls(false);
-        UnlockCursor();
-    }
-
-    public void ExitPuzzle()
-    {
-        isInPuzzleView = false;
-        GameManager.UnregisterActivePuzzle(this);
-
-        if (puzzleCamera != null) puzzleCamera.gameObject.SetActive(false);
-        if (mainPlayerCamera != null) mainPlayerCamera.gameObject.SetActive(true);
-
-        // Notificar si se cancela con Escape
         TVPuzzleController tvPuzzle = GetComponent<TVPuzzleController>();
         if (tvPuzzle != null && tvPuzzle.IsActive)
         {
@@ -367,13 +531,29 @@ public class GenericPuzzleInteractable : MonoBehaviour, IInteractable
         {
             boxPuzzle.StopPuzzle();
         }
+    }
 
-        RestorePlayerState();
-
-        if (isPlayerLooking && !IsSolved)
+    private void ResolvePlayerCamera()
+    {
+        if (mainPlayerCamera == null)
         {
-            ShowPrompt();
+            mainPlayerCamera = Camera.main;
+            if (mainPlayerCamera == null)
+            {
+                MouseLook mouseLook = FindFirstObjectByType<MouseLook>();
+                if (mouseLook != null)
+                {
+                    mainPlayerCamera = mouseLook.GetComponent<Camera>();
+                }
+            }
         }
+    }
+
+    private Camera GetActivePlayerCamera()
+    {
+        if (mainPlayerCamera != null) return mainPlayerCamera;
+        ResolvePlayerCamera();
+        return mainPlayerCamera != null ? mainPlayerCamera : Camera.main;
     }
 
     private void UnlockCursor()
