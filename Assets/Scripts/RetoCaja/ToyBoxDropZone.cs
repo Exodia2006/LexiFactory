@@ -101,10 +101,20 @@ public class ToyBoxDropZone : MonoBehaviour
             Array.Resize(ref toyInitialSpawnPoints, 6);
         }
 
-        // Si la lista de juguetes no se asignó en el Inspector, buscar todos en la escena
-        if (allToysInScene == null || allToysInScene.Count == 0)
+        // Si la lista de juguetes no se asignó en el Inspector o contiene nulos, asegurar todos los juguetes de la escena
+        if (allToysInScene == null)
         {
-            allToysInScene = new List<ToyItem>(FindObjectsByType<ToyItem>(FindObjectsInactive.Include, FindObjectsSortMode.None));
+            allToysInScene = new List<ToyItem>();
+        }
+        allToysInScene.RemoveAll(t => t == null);
+
+        var foundToys = FindObjectsByType<ToyItem>(FindObjectsInactive.Include, FindObjectsSortMode.None);
+        foreach (var t in foundToys)
+        {
+            if (t != null && !allToysInScene.Contains(t))
+            {
+                allToysInScene.Add(t);
+            }
         }
     }
 
@@ -361,12 +371,17 @@ public class ToyBoxDropZone : MonoBehaviour
                 toy.transform.position = spawnPoint.position;
                 toy.transform.rotation = spawnPoint.rotation;
 
+                // Restaurar capa interactuable
+                int toyLayer = LayerMask.NameToLayer("Toy");
+                toy.SetLayerRecursively(toy.gameObject, toyLayer != -1 ? toyLayer : 0);
+
                 // Resetear velocidad lineal y angular del Rigidbody
                 if (toy.TryGetComponent<Rigidbody>(out var rb))
                 {
                     rb.isKinematic = false;
                     rb.linearVelocity = Vector3.zero;
                     rb.angularVelocity = Vector3.zero;
+                    rb.WakeUp();
                 }
 
                 Collider[] colliders = toy.GetComponentsInChildren<Collider>(true);

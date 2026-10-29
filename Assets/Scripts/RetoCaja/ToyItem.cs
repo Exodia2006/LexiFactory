@@ -25,7 +25,20 @@ public class ToyItem : MonoBehaviour
         initialPosition = transform.position;
         initialRotation = transform.rotation;
         initialParent = transform.parent;
-        initialLayer = gameObject.layer;
+
+        int toyLayer = LayerMask.NameToLayer("Toy");
+        int ignoreRaycastLayer = LayerMask.NameToLayer("Ignore Raycast");
+
+        // Si la capa era Ignore Raycast o Default (0) pero existe la capa "Toy" (8), asegurar pertenencia a "Toy"
+        if (gameObject.layer == ignoreRaycastLayer || (gameObject.layer == 0 && toyLayer != -1))
+        {
+            initialLayer = toyLayer != -1 ? toyLayer : 0;
+            SetLayerRecursively(gameObject, initialLayer);
+        }
+        else
+        {
+            initialLayer = gameObject.layer;
+        }
     }
 
     public void Pickup(Transform handHoldPoint)
@@ -37,7 +50,8 @@ public class ToyItem : MonoBehaviour
             rb.angularVelocity = Vector3.zero;
         }
 
-        // Desactivar colliders para que no tapen el Raycast
+        // Desactivar colliders mientras se sostiene para que no choquen con el jugador ni bloqueen el raycast
+        allColliders = GetComponentsInChildren<Collider>(true);
         if (allColliders != null)
         {
             foreach (var col in allColliders)
@@ -46,7 +60,11 @@ public class ToyItem : MonoBehaviour
             }
         }
 
-        SetLayerRecursively(gameObject, LayerMask.NameToLayer("Ignore Raycast"));
+        int ignoreRaycast = LayerMask.NameToLayer("Ignore Raycast");
+        if (ignoreRaycast != -1)
+        {
+            SetLayerRecursively(gameObject, ignoreRaycast);
+        }
 
         transform.SetParent(handHoldPoint);
         transform.localPosition = Vector3.zero;
@@ -56,8 +74,21 @@ public class ToyItem : MonoBehaviour
     public void Drop()
     {
         transform.SetParent(null);
-        SetLayerRecursively(gameObject, initialLayer);
 
+        // Restaurar capa interactuable válida (nunca dejar en Ignore Raycast)
+        int toyLayer = LayerMask.NameToLayer("Toy");
+        int ignoreRaycast = LayerMask.NameToLayer("Ignore Raycast");
+        int layerToRestore = initialLayer;
+
+        if (layerToRestore == ignoreRaycast || (layerToRestore == 0 && toyLayer != -1))
+        {
+            layerToRestore = toyLayer != -1 ? toyLayer : 0;
+        }
+
+        SetLayerRecursively(gameObject, layerToRestore);
+
+        // Reactivar TODOS los colliders del objeto y sus hijos
+        allColliders = GetComponentsInChildren<Collider>(true);
         if (allColliders != null)
         {
             foreach (var col in allColliders)
@@ -66,11 +97,13 @@ public class ToyItem : MonoBehaviour
             }
         }
 
+        // Reactivar física en el Rigidbody
         if (rb != null)
         {
             rb.isKinematic = false;
             rb.linearVelocity = Vector3.zero;
             rb.angularVelocity = Vector3.zero;
+            rb.WakeUp();
         }
     }
 
@@ -81,7 +114,12 @@ public class ToyItem : MonoBehaviour
         transform.localPosition = Vector3.zero;
         transform.localRotation = Quaternion.identity;
 
+        int toyLayer = LayerMask.NameToLayer("Toy");
+        int layerToRestore = (initialLayer != LayerMask.NameToLayer("Ignore Raycast")) ? initialLayer : (toyLayer != -1 ? toyLayer : 0);
+        SetLayerRecursively(gameObject, layerToRestore);
+
         // Reactivar colliders
+        allColliders = GetComponentsInChildren<Collider>(true);
         if (allColliders != null)
         {
             foreach (var col in allColliders)
@@ -100,8 +138,11 @@ public class ToyItem : MonoBehaviour
         transform.position = initialPosition;
         transform.rotation = initialRotation;
 
-        SetLayerRecursively(gameObject, initialLayer);
+        int toyLayer = LayerMask.NameToLayer("Toy");
+        int layerToRestore = (initialLayer != LayerMask.NameToLayer("Ignore Raycast")) ? initialLayer : (toyLayer != -1 ? toyLayer : 0);
+        SetLayerRecursively(gameObject, layerToRestore);
 
+        allColliders = GetComponentsInChildren<Collider>(true);
         if (allColliders != null)
         {
             foreach (var col in allColliders)
@@ -115,6 +156,7 @@ public class ToyItem : MonoBehaviour
             rb.isKinematic = false;
             rb.linearVelocity = Vector3.zero;
             rb.angularVelocity = Vector3.zero;
+            rb.WakeUp();
         }
     }
 

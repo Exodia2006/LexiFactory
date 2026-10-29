@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -121,13 +122,13 @@ public class ToyInteractionSystem : MonoBehaviour
             if (playerCamera == null) return;
         }
 
-        // 1. Raycast continuo desde el centro de la pantalla (Viewport 0.5, 0.5)
+        // Raycast continuo desde el centro de la pantalla (Viewport 0.5, 0.5)
         Ray ray = playerCamera.ViewportPointToRay(new Vector3(0.5f, 0.5f, 0f));
 
         if (!IsHoldingToy)
         {
             HandleHoverRaycast(ray);
-            HandlePickupInput();
+            HandlePickupInput(ray);
         }
         else
         {
@@ -137,31 +138,61 @@ public class ToyInteractionSystem : MonoBehaviour
         }
     }
 
-    private void HandleHoverRaycast(Ray ray)
+    private ToyItem FindToyUnderRay(Ray ray)
     {
-        if (Physics.Raycast(ray, out RaycastHit hit, rayDistance, toyLayerMask, QueryTriggerInteraction.Collide))
+        // RaycastAll para que triggers intermedios o el collider del Player no bloqueen la detección
+        RaycastHit[] hits = Physics.RaycastAll(ray, rayDistance, ~0, QueryTriggerInteraction.Collide);
+        if (hits == null || hits.Length == 0) return null;
+
+        Array.Sort(hits, (a, b) => a.distance.CompareTo(b.distance));
+
+        foreach (var hit in hits)
         {
+            if (hit.collider == null) continue;
+
+            // Ignorar el propio jugador y sus colliders
+            if (hit.collider.transform.root == transform.root || hit.collider.CompareTag("Player"))
+                continue;
+
             ToyItem toy = hit.collider.GetComponent<ToyItem>();
             if (toy == null) toy = hit.collider.GetComponentInParent<ToyItem>();
 
             if (toy != null && toy.gameObject.activeInHierarchy)
             {
-                HighlightToy(toy);
-                return;
+                return toy;
+            }
+
+            // Si es un objeto sólido (no trigger) frente a la cámara y no es un juguete, bloquea la visión
+            if (!hit.collider.isTrigger)
+            {
+                break;
             }
         }
 
-        ClearHighlight();
+        return null;
     }
 
-    private void HandlePickupInput()
+    private void HandleHoverRaycast(Ray ray)
+    {
+        ToyItem toy = FindToyUnderRay(ray);
+        if (toy != null)
+        {
+            HighlightToy(toy);
+        }
+        else
+        {
+            ClearHighlight();
+        }
+    }
+
+    private void HandlePickupInput(Ray ray)
     {
         // Agarrar con tecla 'E' o Clic Izquierdo
         if (Input.GetKeyDown(KeyCode.E) || Input.GetMouseButtonDown(0))
         {
-            if (currentHoveredToy != null)
+            ToyItem toyToGrab = currentHoveredToy != null ? currentHoveredToy : FindToyUnderRay(ray);
+            if (toyToGrab != null)
             {
-                ToyItem toyToGrab = currentHoveredToy;
                 ClearHighlight(); // Restaurar materiales antes de agarrar
                 PickupToy(toyToGrab);
             }
@@ -220,7 +251,22 @@ public class ToyInteractionSystem : MonoBehaviour
         ToyItem itemToDrop = HeldToy;
         HeldToy = null;
 
+        // Posicionar al soltar ligeramente adelante de la cámara para que no colisione con el CharacterController
+        if (playerCamera != null)
+        {
+            Vector3 dropPosition = playerCamera.transform.position + playerCamera.transform.forward * 0.8f;
+            itemToDrop.transform.position = dropPosition;
+        }
+
         itemToDrop.Drop();
+
+        // Aplicar leve impulso hacia adelante para una caída natural y visible
+        if (itemToDrop.TryGetComponent<Rigidbody>(out var rb) && playerCamera != null)
+        {
+            rb.linearVelocity = playerCamera.transform.forward * 1.5f + Vector3.up * 0.5f;
+        }
+
+        ClearHighlight();
     }
 
     public ToyItem ClearHeldToy()
